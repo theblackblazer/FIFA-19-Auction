@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# Cloudflare Tunnel Binary & Ephemeral Tunnel Files
+cloudflared.exe
+data/tunnel_url.txt
+data/tunnel_config.json
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.env
+.venv
+
+# IDE / Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

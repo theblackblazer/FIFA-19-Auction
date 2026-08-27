@@ -1,0 +1,2641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FIFA 19 | Mobile Bidding Controller</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        eaGold: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600&family=Inter:wght@400;600;700;800;900&family=Oswald:wght@600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Vector Club Crest Generator -->
+    <script src="/js/crest_generator.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        html.dark body {
+            background: linear-gradient(135deg, #020617 0%, #0b1120 50%, #020617 100%) !important;
+            color: #f1f5f9 !important;
+        }
+        .touch-btn:active {
+            transform: scale(0.96);
+        }
+        .color-swatch.active {
+            outline: 3px solid #fbbf24;
+            outline-offset: 2px;
+            transform: scale(1.1);
+        }
+        .emblem-chip.active {
+            background: #f59e0b !important;
+            color: #0f172a !important;
+            border-color: #f59e0b !important;
+            font-weight: 900;
+        }
+        .club-vector-crest {
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3));
+        }
+        @keyframes radarPulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .radar-anim {
+            animation: radarPulse 2s infinite ease-in-out;
+        }
+
+        /* Mobile Position Card Fades */
+        .fut-card-fwd {
+            background: linear-gradient(180deg, rgba(244, 63, 94, 0.16) 0%, rgba(255, 241, 242, 0.5) 45%, #ffffff 100%);
+            border-color: rgba(251, 113, 133, 0.6) !important;
+        }
+        .dark .fut-card-fwd {
+            background: linear-gradient(180deg, rgba(136, 19, 55, 0.45) 0%, rgba(30, 41, 59, 0.95) 48%, #0f172a 100%) !important;
+            border-color: rgba(225, 29, 72, 0.6) !important;
+        }
+        .fut-card-mid {
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.16) 0%, rgba(239, 246, 255, 0.5) 45%, #ffffff 100%);
+            border-color: rgba(147, 197, 253, 0.6) !important;
+        }
+        .dark .fut-card-mid {
+            background: linear-gradient(180deg, rgba(30, 58, 138, 0.45) 0%, rgba(30, 41, 59, 0.95) 48%, #0f172a 100%) !important;
+            border-color: rgba(59, 130, 246, 0.6) !important;
+        }
+        .fut-card-def {
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.16) 0%, rgba(236, 253, 245, 0.5) 45%, #ffffff 100%);
+            border-color: rgba(110, 231, 183, 0.6) !important;
+        }
+        .dark .fut-card-def {
+            background: linear-gradient(180deg, rgba(6, 78, 59, 0.45) 0%, rgba(30, 41, 59, 0.95) 48%, #0f172a 100%) !important;
+            border-color: rgba(16, 185, 129, 0.6) !important;
+        }
+        .fut-card-gk {
+            background: linear-gradient(180deg, rgba(245, 158, 11, 0.18) 0%, rgba(254, 252, 232, 0.55) 45%, #ffffff 100%);
+            border-color: rgba(252, 211, 77, 0.6) !important;
+        }
+        .dark .fut-card-gk {
+            background: linear-gradient(180deg, rgba(120, 53, 15, 0.45) 0%, rgba(30, 41, 59, 0.95) 48%, #0f172a 100%) !important;
+            border-color: rgba(245, 158, 11, 0.6) !important;
+        }
+
+        /* 90+ Overall Iconic Gold Card */
+        .fut-card-gold {
+            background: linear-gradient(180deg, rgba(251, 191, 36, 0.35) 0%, rgba(254, 240, 138, 0.7) 45%, #ffffff 100%) !important;
+            border-color: rgba(217, 119, 6, 0.85) !important;
+            box-shadow: 0 10px 28px -4px rgba(245, 158, 11, 0.35) !important;
+        }
+        .dark .fut-card-gold {
+            background: linear-gradient(180deg, rgba(180, 83, 9, 0.65) 0%, rgba(120, 53, 15, 0.4) 48%, #0f172a 100%) !important;
+            border-color: rgba(251, 191, 36, 0.9) !important;
+            box-shadow: 0 10px 32px -4px rgba(245, 158, 11, 0.45) !important;
+        }
+
+        /* Mobile Tactical Pitch */
+        .mobile-pitch {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 3px solid rgba(16, 185, 129, 0.85);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3), 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+            background: linear-gradient(to bottom, #15803d 0%, #16a34a 50%, #15803d 100%);
+        }
+        .pitch-stripes-mobile {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.18;
+            background: repeating-linear-gradient(to bottom, transparent, transparent 32px, rgba(0,0,0,0.18) 32px, rgba(0,0,0,0.18) 64px);
+        }
+        .pitch-markings-mobile {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .pitch-slot-mobile {
+            min-width: 52px;
+            max-width: 66px;
+            height: 60px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(4px);
+            border: 2px dashed rgba(255, 255, 255, 0.75);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+            user-select: none;
+        }
+        .dark .pitch-slot-mobile {
+            background: rgba(15, 23, 42, 0.45);
+            border: 2px dashed rgba(148, 163, 184, 0.6);
+        }
+        .pitch-slot-mobile:active {
+            transform: scale(0.94);
+        }
+        .pitch-slot-mobile.filled {
+            border: 2px solid #fbbf24;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .dark .pitch-slot-mobile.filled {
+            border: 2px solid #fbbf24;
+            background: rgba(15, 23, 42, 0.95);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-slate-100 via-amber-50/30 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- ==================== 1. DYNAMIC CLUB CREATION & TEAM SELECTION LOBBY SCREEN ==================== -->
+    <div id="screen-team-select" class="min-h-screen p-4 sm:p-6 flex flex-col justify-start max-w-md w-full mx-auto space-y-4 pb-12">
+        <!-- Top bar with Theme Switcher -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-slate-950 font-black text-sm font-['Oswald'] shadow-md">
+                    19
+                </div>
+                <span class="font-['Outfit'] font-black text-sm text-slate-900 dark:text-white uppercase">FIFA Auction Remote</span>
+            </div>
+            <button onclick="toggleMobileTheme()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-400 flex items-center justify-center text-xs border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95" title="Toggle Theme">
+                <i class="theme-toggle-icon fa-solid fa-moon"></i>
+            </button>
+        </div>
+
+        <div class="text-center space-y-1 pt-0.5">
+            <h1 class="font-['Outfit'] font-black text-2xl text-slate-900 dark:text-white tracking-wide uppercase">Join Auction Arena</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold max-w-xs mx-auto">
+                Create your custom football club with a bespoke logo, or pick an existing team!
+            </p>
+        </div>
+
+        <!-- 1. CREATE CUSTOM CLUB STUDIO CARD -->
+        <div class="bg-white dark:bg-slate-900 border-2 border-amber-400/80 dark:border-amber-500/60 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3.5 relative overflow-hidden">
+            <!-- Studio Badge -->
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-shield-halved text-amber-500 text-sm"></i>
+                    <span class="font-['Outfit'] font-black text-xs uppercase tracking-wider text-slate-900 dark:text-white">Create Your Club & Logo</span>
+                </div>
+                <button onclick="randomizeCustomClub()" class="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 hover:text-amber-500 flex items-center space-x-1 active:scale-95">
+                    <i class="fa-solid fa-dice"></i>
+                    <span>Shuffle</span>
+                </button>
+            </div>
+
+            <!-- Real-Time Vector Crest Live Preview Box -->
+            <div class="py-2 flex flex-col items-center justify-center">
+                <div id="studio-crest-preview" class="w-28 h-32 flex items-center justify-center transition-transform hover:scale-105 duration-200 cursor-pointer" onclick="randomizeCustomClub()" title="Click to shuffle crest">
+                    <!-- Dynamic SVG crest rendered via JS -->
+                </div>
+                <span class="text-[10px] text-slate-400 font-bold mt-1">Live Generated Club Crest</span>
+            </div>
+
+            <!-- Club & Manager Inputs -->
+            <div class="space-y-2.5">
+                <div>
+                    <label class="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 block mb-1">
+                        🏆 Club Name
+                    </label>
+                    <input type="text" id="studio-club-name" oninput="onStudioClubNameChange()" placeholder="e.g. Royal Strikers FC, London Lions..." class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-black text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 shadow-inner">
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 block mb-1">
+                        👤 Manager Nickname
+                    </label>
+                    <input type="text" id="studio-mgr-name" placeholder="e.g. Rahul, Alex, Marco..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+
+            <!-- Crest Emblem Icon Selector -->
+            <div class="space-y-1.5">
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Crest Heraldic Emblem</span>
+                <div class="flex items-center space-x-1.5 overflow-x-auto pb-1" id="studio-emblem-picker">
+                    <button onclick="setStudioEmblem('crown')" class="emblem-chip active px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm active:scale-95 transition-all" data-emblem="crown">👑</button>
+                    <button onclick="setStudioEmblem('lion')" class="emblem-chip px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm active:scale-95 transition-all" data-emblem="lion">🦁</button>
+                    <button onclick="setStudioEmblem('eagle')" class="emblem-chip px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm active:scale-95 transition-all" data-emblem="eagle">🦅</button>
+                    <button onclick="setStudioEmblem('lightning')" class="emblem-chip px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm active:scale-95 transition-all" data-emblem="lightning">⚡</button>
+                    <button onclick="setStudioEmblem('ball')" class="emblem-chip px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm active:scale-95 transition-all" data-emblem="ball">⚽</button>
+                    <button onclick="setStudioEmblem('star')" class="emblem-chip px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm active:scale-95 transition-all" data-emblem="star">⭐</button>
+                    <button onclick="setStudioEmblem('dragon')" class="emblem-chip px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm active:scale-95 transition-all" data-emblem="dragon">🐉</button>
+                    <button onclick="setStudioEmblem('flame')" class="emblem-chip px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-sm active:scale-95 transition-all" data-emblem="flame">🔥</button>
+                </div>
+            </div>
+
+            <!-- Color Palette Swatches -->
+            <div class="space-y-1.5">
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Crest Theme Color</span>
+                <div class="flex items-center space-x-2" id="studio-color-picker">
+                    <button onclick="setStudioColor('gold')" class="color-swatch active w-7 h-7 rounded-full bg-amber-500 shadow-sm border border-white" data-color="gold" title="Royal Gold"></button>
+                    <button onclick="setStudioColor('red')" class="color-swatch w-7 h-7 rounded-full bg-red-600 shadow-sm border border-white" data-color="red" title="Crimson Red"></button>
+                    <button onclick="setStudioColor('blue')" class="color-swatch w-7 h-7 rounded-full bg-blue-600 shadow-sm border border-white" data-color="blue" title="Azure Blue"></button>
+                    <button onclick="setStudioColor('emerald')" class="color-swatch w-7 h-7 rounded-full bg-emerald-600 shadow-sm border border-white" data-color="emerald" title="Emerald Green"></button>
+                    <button onclick="setStudioColor('purple')" class="color-swatch w-7 h-7 rounded-full bg-purple-600 shadow-sm border border-white" data-color="purple" title="Imperial Purple"></button>
+                    <button onclick="setStudioColor('orange')" class="color-swatch w-7 h-7 rounded-full bg-orange-500 shadow-sm border border-white" data-color="orange" title="Sunset Orange"></button>
+                    <button onclick="setStudioColor('cyan')" class="color-swatch w-7 h-7 rounded-full bg-cyan-500 shadow-sm border border-white" data-color="cyan" title="Titanium Cyan"></button>
+                    <button onclick="setStudioColor('obsidian')" class="color-swatch w-7 h-7 rounded-full bg-slate-800 shadow-sm border border-slate-600" data-color="obsidian" title="Obsidian Slate"></button>
+                </div>
+            </div>
+
+            <!-- CTA: Create & Join Arena -->
+            <button onclick="joinWithCustomClub()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-['Outfit'] font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/25 active:scale-95 transition-all border border-amber-300 flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-gavel"></i>
+                <span id="studio-join-btn-text">Create & Enter Auction Arena</span>
+            </button>
+        </div>
+
+        <!-- 2. OR PICK AN EXISTING CLUB -->
+        <div class="space-y-2 pt-2">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">Or Join Existing Team</span>
+                <span class="text-[10px] font-bold text-slate-400">Claim Slot</span>
+            </div>
+            <div id="lobby-teams-container" class="space-y-2.5 max-h-[40vh] overflow-y-auto pr-1">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== 2. LIVE BIDDING CONTROLLER SCREEN ==================== -->
+    <div id="screen-bidding" class="hidden min-h-screen flex flex-col justify-between">
+        
+        <!-- Header: Manager Identity & Squad Counter -->
+        <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3.5 py-2.5 flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-black text-sm font-['Oswald'] shadow">
+                    19
+                </div>
+                <!-- Highlighted My Squad Button in Header -->
+                <button onclick="openMySquadModal()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-['Outfit'] font-black text-xs uppercase tracking-wide shadow-md active:scale-95 transition-all flex items-center space-x-1.5 border border-emerald-400/40">
+                    <i class="fa-solid fa-futbol text-yellow-300 text-xs"></i>
+                    <span>My Squad</span>
+                    <span class="px-1.5 py-0.2 rounded-md bg-slate-950/40 text-yellow-300 font-['Oswald'] text-[11px] font-black" id="my-squad-count">0</span>
+                </button>
+            </div>
+
+            <!-- Right Actions: Theme Toggle & Switch Team -->
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleMobileTheme()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-400 flex items-center justify-center text-xs border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95" title="Toggle Theme">
+                    <i class="theme-toggle-icon fa-solid fa-moon"></i>
+                </button>
+                <button onclick="switchMyTeam()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-[11px] uppercase border border-slate-200 dark:border-slate-700 transition-all active:scale-95 flex items-center space-x-1">
+                    <i class="fa-solid fa-right-left text-amber-600 mr-1"></i> Switch Team
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <main class="flex-1 max-w-md w-full mx-auto p-4 space-y-4 flex flex-col justify-between">
+
+            <!-- 1. Manager Purse Card & Max Bid Limit -->
+            <div class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-md space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div id="mgr-avatar-display" class="w-12 h-14 flex items-center justify-center flex-shrink-0">
+                            <!-- Custom Crest Image -->
+                        </div>
+                        <div>
+                            <h3 id="mgr-name-display" class="font-['Outfit'] font-black text-base text-slate-900 dark:text-white leading-tight">Real Galácticos</h3>
+                            <span id="mgr-squad-quota-display" class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Squad: 0/18 players</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Purse Left</span>
+                        <span id="mgr-budget-display" class="font-['Outfit'] text-2xl font-black text-emerald-600 dark:text-emerald-400">₹1,500</span>
+                    </div>
+                </div>
+
+                <!-- Max Allowable Bid Quota Strip -->
+                <div class="bg-amber-500/10 dark:bg-amber-500/15 border border-amber-400/30 rounded-2xl px-3.5 py-2 flex items-center justify-between text-xs">
+                    <div>
+                        <span class="text-[10px] font-black uppercase text-amber-900 dark:text-amber-300 block tracking-wider">Max Allowable Bid</span>
+                        <span id="mgr-quota-help" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Min ₹50 reserved for remaining</span>
+                    </div>
+                    <span id="mgr-maxbid-display" class="font-['Oswald'] text-xl font-black text-amber-700 dark:text-amber-400">₹650</span>
+                </div>
+
+                <!-- Prominent Highlighted My Squad & Tactical Pitch Button -->
+                <button onclick="openMySquadModal()" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-['Outfit'] font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-between active:scale-98 transition-all border border-emerald-400/40">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-futbol text-sm text-yellow-300 animate-spin" style="--fa-animation-duration: 8s;"></i>
+                        <span>View My Squad & Pitch Lineup</span>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-xl bg-slate-950/40 text-yellow-300 font-['Oswald'] text-xs font-black flex items-center space-x-1">
+                        <span id="mgr-squad-btn-count">0</span>
+                        <span>/ 18</span>
+                    </span>
+                </button>
+            </div>
+
+            <!-- 2. Nominated Player Spotlight OR Waiting State -->
+            <div id="mobile-player-card" class="fut-card-fwd border-2 rounded-3xl p-4 shadow-xl text-center relative overflow-hidden transition-all duration-300">
+                
+                <!-- ACTIVE AUCTION CONTENT (Shown when player is live) -->
+                <div id="mobile-active-content">
+                    <!-- 3-Second Nomination Buffer Countdown Banner -->
+                    <div id="mobile-nominee-buffer-banner" class="hidden mb-2.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 p-2.5 rounded-2xl font-black text-xs flex items-center justify-between shadow-lg animate-pulse border border-amber-300">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-slate-950 animate-ping"></span>
+                            <span class="uppercase tracking-wider">Bidding Opens In</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <span id="mobile-buffer-count" class="font-['Oswald'] text-base bg-slate-950 text-amber-400 px-2 py-0.5 rounded-xl font-black">3s</span>
+                            <span class="text-[10px] font-bold text-slate-800 uppercase">Review Stats</span>
+                        </div>
+                    </div>
+
+                    <!-- Stage Status & Live Countdown -->
+                    <div class="flex items-center justify-between mb-2 text-xs">
+                        <span id="stage-status" class="px-2.5 py-1 rounded-full bg-emerald-500 text-white font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-white animate-ping mr-1"></span>
+                            <span>LIVE ON BLOCK</span>
+                        </span>
+                        <span class="text-slate-700 dark:text-slate-300 font-bold text-xs" id="mobile-stage-timer">
+                            <i class="fa-regular fa-clock text-amber-500 mr-1"></i> Live
+                        </span>
+                    </div>
+
+                    <!-- Top Card Strip: OVR & Pos left, Flag & Club right -->
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span id="stage-p-ovr" class="font-['Oswald'] text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none">94</span>
+                            <span id="stage-p-pos" class="font-['Oswald'] text-xs font-black px-2 py-0.5 rounded-lg bg-rose-500/15 text-rose-700 dark:text-rose-300">CAM</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5 max-w-[170px] justify-end">
+                            <span id="stage-p-club-name" class="text-[11px] font-black text-slate-700 dark:text-slate-200 truncate">Santos FC</span>
+                            <img id="stage-p-club-logo" src="/assets/default_club.svg" alt="Club" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.onerror=null; this.src='/assets/default_club.svg';">
+                        </div>
+                    </div>
+
+                    <!-- Big Centered Player Portrait -->
+                    <div class="flex justify-center my-2">
+                        <div id="stage-p-photo-box" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden relative shadow-lg bg-white/40 dark:bg-slate-800/60 border-2 border-rose-400">
+                            <img id="stage-p-photo" src="/assets/default_player.svg" alt="Player" class="w-full h-full object-cover object-top" onerror="this.onerror=null; this.src='/assets/default_player.svg';">
+                        </div>
+                    </div>
+
+                    <!-- Player Name & Club Info Centered -->
+                    <div class="text-center pt-0.5">
+                        <h2 id="stage-p-name" class="font-['Outfit'] font-black text-lg text-slate-900 dark:text-white truncate">Pelé</h2>
+                        <p id="stage-p-sub" class="text-xs font-bold text-slate-600 dark:text-slate-400 truncate">
+                            <span id="stage-p-club-detail">Santos FC</span> • Base <span id="stage-p-base-price" class="text-amber-600 dark:text-amber-400 font-black">₹50</span>
+                        </p>
+                    </div>
+
+                    <!-- 6 Stats Strip (Enlarged & Bold) -->
+                    <div class="grid grid-cols-6 gap-1 mt-2.5 text-center bg-slate-100/90 dark:bg-slate-800/80 py-2.5 px-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-inner">
+                        <div class="flex flex-col items-center">
+                            <span id="stage-p-pac" class="font-['Oswald'] text-sm sm:text-base font-black leading-tight text-slate-900 dark:text-white">95</span>
+                            <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-black">PAC</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span id="stage-p-sho" class="font-['Oswald'] text-sm sm:text-base font-black leading-tight text-slate-900 dark:text-white">96</span>
+                            <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-black">SHO</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span id="stage-p-pas" class="font-['Oswald'] text-sm sm:text-base font-black leading-tight text-slate-900 dark:text-white">93</span>
+                            <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-black">PAS</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span id="stage-p-dri" class="font-['Oswald'] text-sm sm:text-base font-black leading-tight text-slate-900 dark:text-white">96</span>
+                            <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-black">DRI</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span id="stage-p-def" class="font-['Oswald'] text-sm sm:text-base font-black leading-tight text-slate-900 dark:text-white">60</span>
+                            <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-black">DEF</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span id="stage-p-phy" class="font-['Oswald'] text-sm sm:text-base font-black leading-tight text-slate-900 dark:text-white">76</span>
+                            <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-black">PHY</span>
+                        </div>
+                    </div>
+
+                    <!-- Key Attributes Quick Matrix (Instant read during 3s buffer) -->
+                    <div id="stage-key-attributes" class="grid grid-cols-4 gap-1.5 mt-2 text-[10px] text-center">
+                        <div class="bg-white/80 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                            <span class="text-slate-500 dark:text-slate-400 font-bold block text-[9px] uppercase">Foot</span>
+                            <span id="stage-p-foot" class="font-black text-slate-900 dark:text-white">Right</span>
+                        </div>
+                        <div class="bg-white/80 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                            <span class="text-slate-500 dark:text-slate-400 font-bold block text-[9px] uppercase">Skills</span>
+                            <span id="stage-p-skills" class="font-black text-amber-600 dark:text-amber-400">4 ★</span>
+                        </div>
+                        <div class="bg-white/80 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                            <span class="text-slate-500 dark:text-slate-400 font-bold block text-[9px] uppercase">Weak Foot</span>
+                            <span id="stage-p-weakfoot" class="font-black text-amber-600 dark:text-amber-400">5 ★</span>
+                        </div>
+                        <div class="bg-white/80 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                            <span class="text-slate-500 dark:text-slate-400 font-bold block text-[9px] uppercase">Work Rate</span>
+                            <span id="stage-p-workrate" class="font-black text-slate-900 dark:text-white truncate">High/Med</span>
+                        </div>
+                    </div>
+
+                    <!-- Current Highest Bid Banner -->
+                    <div class="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-700/80 bg-amber-500/15 border border-amber-400/40 rounded-2xl p-3">
+                        <span class="text-[10px] uppercase font-black tracking-widest text-slate-600 dark:text-slate-400 block">Current Leading Bid</span>
+                        <div id="stage-bid-amount" class="font-['Oswald'] text-3xl font-black text-slate-950 dark:text-amber-400 my-0.5">
+                            ₹50
+                        </div>
+                        <div id="stage-leading-bidder" class="text-xs font-extrabold text-amber-900 dark:text-amber-300">
+                            Opening Price (No Bids Yet)
+                        </div>
+                    </div>
+
+                    <!-- Quick Button to view Player Bio & Deep Stats -->
+                    <button onclick="openCurrentPlayerDetailsModal()" class="mt-2.5 w-full py-2 px-3 rounded-2xl bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-extrabold text-xs flex items-center justify-center space-x-1.5 transition-all border border-slate-200/80 dark:border-slate-700 shadow-sm active:scale-98">
+                        <i class="fa-solid fa-circle-info text-amber-500"></i>
+                        <span>Player Bio & Detailed Attributes</span>
+                    </button>
+                </div>
+
+                <!-- WAITING STATE (Shown when no active player is on stage) -->
+                <div id="mobile-waiting-content" class="hidden py-6 flex flex-col items-center justify-center space-y-3">
+                    <div class="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 text-2xl radar-anim shadow-inner">
+                        <i class="fa-solid fa-futbol fa-spin" style="--fa-animation-duration: 4s;"></i>
+                    </div>
+                    <div class="text-center">
+                        <h3 id="mobile-waiting-title" class="font-['Outfit'] font-black text-lg text-slate-900 dark:text-white uppercase tracking-wide">Starting Auction Soon</h3>
+                        <p id="mobile-waiting-sub" class="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">Waiting for host to nominate the first player...</p>
+                    </div>
+                    <!-- Celebration Toast (if just sold) -->
+                    <div id="mobile-sold-toast" class="hidden w-full bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-400 dark:border-emerald-600 rounded-2xl p-3 text-center space-y-1">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block">🏆 Transfer Completed!</span>
+                        <div id="mobile-sold-text" class="text-xs font-black text-slate-900 dark:text-white"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 3. Big Touch-Friendly Bidding Controller (Vivid & High Contrast) -->
+            <div id="mobile-bidding-panel" class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-xl space-y-3 transition-all duration-300">
+                <!-- Lock Notice during 3-Second Nomination Buffer -->
+                <div id="mobile-bidding-lock-banner" class="hidden p-2.5 rounded-2xl bg-amber-500/20 border-2 border-amber-400 text-center text-xs font-black text-amber-900 dark:text-amber-300 space-x-1 animate-pulse">
+                    <i class="fa-solid fa-lock text-amber-600 dark:text-amber-400 mr-1"></i>
+                    <span>Bidding opens in <strong id="mobile-bidding-lock-count" class="font-['Oswald'] text-base text-amber-600 dark:text-amber-300">3s</strong> • Ready your bid!</span>
+                </div>
+
+                <!-- Leading Lock Notice (Consecutive Bidding Prevention) -->
+                <div id="mobile-leading-lock-banner" class="hidden p-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 border-2 border-emerald-500 text-center space-y-1 shadow-md">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span class="font-['Outfit'] font-black text-sm uppercase tracking-wide text-emerald-800 dark:text-emerald-300">👑 You are Leading the Bid!</span>
+                    </div>
+                    <p class="text-[11px] text-emerald-900 dark:text-emerald-200 font-bold">
+                        Current high bid: <strong id="mobile-leading-lock-price" class="font-['Oswald'] text-sm text-emerald-700 dark:text-emerald-300">₹0</strong> • Consecutive bidding is locked until a rival outbids you.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-bolt text-amber-500"></i>
+                        <span>Fast Tap Bids</span>
+                    </span>
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">1-Tap Instant Bid</span>
+                </div>
+
+                <!-- Quick Bid 4-Grid -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button id="mobile-bid-inc-10" onclick="mobilePlaceIncrement(10)" class="bid-action-btn touch-btn py-3.5 px-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 active:bg-emerald-200 border-2 border-emerald-500/80 hover:border-emerald-600 text-slate-900 dark:text-white font-extrabold text-sm transition-all flex flex-col items-center justify-center shadow-sm">
+                        <span class="text-emerald-700 dark:text-emerald-300 font-['Oswald'] font-black text-2xl leading-none">+₹10</span>
+                        <span class="text-[10px] text-emerald-900 dark:text-emerald-300 font-extrabold uppercase mt-1 label-text">Raise 10</span>
+                    </button>
+                    <button id="mobile-bid-inc-25" onclick="mobilePlaceIncrement(25)" class="bid-action-btn touch-btn py-3.5 px-3 rounded-2xl bg-teal-50 dark:bg-teal-950/50 active:bg-teal-200 border-2 border-teal-500/80 hover:border-teal-600 text-slate-900 dark:text-white font-extrabold text-sm transition-all flex flex-col items-center justify-center shadow-sm">
+                        <span class="text-teal-700 dark:text-teal-300 font-['Oswald'] font-black text-2xl leading-none">+₹25</span>
+                        <span class="text-[10px] text-teal-900 dark:text-teal-300 font-extrabold uppercase mt-1 label-text">Raise 25</span>
+                    </button>
+                    <button id="mobile-bid-inc-50" onclick="mobilePlaceIncrement(50)" class="bid-action-btn touch-btn py-3.5 px-3 rounded-2xl bg-amber-50 dark:bg-amber-950/50 active:bg-amber-200 border-2 border-amber-500/80 hover:border-amber-600 text-slate-900 dark:text-white font-extrabold text-sm transition-all flex flex-col items-center justify-center shadow-sm">
+                        <span class="text-amber-700 dark:text-amber-300 font-['Oswald'] font-black text-2xl leading-none">+₹50</span>
+                        <span class="text-[10px] text-amber-900 dark:text-amber-300 font-extrabold uppercase mt-1 label-text">Power Raise</span>
+                    </button>
+                    <button id="mobile-bid-inc-100" onclick="mobilePlaceIncrement(100)" class="bid-action-btn touch-btn py-3.5 px-3 rounded-2xl bg-purple-50 dark:bg-purple-950/50 active:bg-purple-200 border-2 border-purple-500/80 hover:border-purple-600 text-slate-900 dark:text-white font-extrabold text-sm transition-all flex flex-col items-center justify-center shadow-sm">
+                        <span class="text-purple-700 dark:text-purple-300 font-['Oswald'] font-black text-2xl leading-none">+₹100</span>
+                        <span class="text-[10px] text-purple-900 dark:text-purple-300 font-extrabold uppercase mt-1 label-text">Mega Bid</span>
+                    </button>
+                </div>
+
+                <!-- Custom Bid Row -->
+                <div class="flex space-x-2 pt-1">
+                    <div class="relative flex-1">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 font-black text-sm">₹</span>
+                        <input type="number" id="mobile-custom-bid" placeholder="Custom bid amount (e.g. 120)" class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-slate-900 dark:text-white font-mono font-black placeholder-slate-400 focus:outline-none focus:border-emerald-500 shadow-inner">
+                    </div>
+                    <button id="mobile-custom-bid-btn" onclick="mobilePlaceCustomBid()" class="bid-action-btn touch-btn px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-gavel"></i>
+                        <span>Bid</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. Auction Room Managers & Live Purses Hub -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-md space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-users text-amber-500 text-sm"></i>
+                        <h4 class="font-['Outfit'] font-black text-xs uppercase tracking-wider text-slate-800 dark:text-white">Auction Room Managers</h4>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-400">Purses & Squads</span>
+                </div>
+
+                <div id="mobile-rivals-list" class="space-y-2">
+                    <!-- Injected dynamically with all 4 managers -->
+                </div>
+            </div>
+
+            <!-- Squad Modal for Mobile (Unified Pitch View & List View with Formations) -->
+            <div id="mobile-inspect-squad-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+                <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-5 max-h-[90vh] overflow-y-auto space-y-3.5 shadow-2xl border border-slate-200 dark:border-slate-800">
+                    
+                    <!-- Header -->
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                            <span id="inspect-mgr-avatar" class="text-2xl flex-shrink-0">👑</span>
+                            <div class="min-w-0">
+                                <h3 id="inspect-mgr-name" class="font-['Outfit'] font-black text-base text-slate-900 dark:text-white truncate">Real Galácticos</h3>
+                                <p id="inspect-mgr-sub" class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold truncate">0 Players • ₹1,500 Purse</p>
+                            </div>
+                        </div>
+                        <button onclick="closeInspectSquadModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-lg p-1 flex-shrink-0">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- View Switcher Tabs (Pitch vs List) -->
+                    <div class="flex items-center justify-between bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <button id="mobile-squad-tab-pitch" onclick="setMobileSquadViewMode('pitch')" class="flex-1 py-1.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm">
+                            <i class="fa-solid fa-futbol text-emerald-500"></i>
+                            <span>Pitch View</span>
+                        </button>
+                        <button id="mobile-squad-tab-list" onclick="setMobileSquadViewMode('list')" class="flex-1 py-1.5 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                            <i class="fa-solid fa-list-ul text-amber-500"></i>
+                            <span>List View</span>
+                        </button>
+                    </div>
+
+                    <!-- 1. PITCH VIEW CONTAINER -->
+                    <div id="mobile-pitch-view-container" class="space-y-3">
+                        <!-- Formation Toolbar -->
+                        <div class="flex items-center justify-between space-x-2">
+                            <div class="flex items-center space-x-1.5 flex-1 min-w-0">
+                                <span class="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 flex-shrink-0">Formation:</span>
+                                <select id="mobile-pitch-formation-select" onchange="changeMobilePitchFormation()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-black text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 flex-1 min-w-0">
+                                    <option value="4-3-3">4-3-3 (Attack)</option>
+                                    <option value="4-2-3-1">4-2-3-1 (3 CAMs / 2 CDMs)</option>
+                                    <option value="4-4-2">4-4-2 (Classic Flat)</option>
+                                    <option value="4-1-2-1-2">4-1-2-1-2 (Diamond Mid)</option>
+                                    <option value="3-5-2">3-5-2 (Wingback Attack)</option>
+                                    <option value="4-3-2-1">4-3-2-1 (Christmas Tree)</option>
+                                    <option value="5-3-2">5-3-2 (Solid 5 Back)</option>
+                                </select>
+                            </div>
+                            <button onclick="autoFillMobileSquadXI()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-sm flex items-center space-x-1 active:scale-95 flex-shrink-0" title="Smart Auto Pick Best XI">
+                                <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                                <span>Auto XI</span>
+                            </button>
+                        </div>
+
+                        <!-- Tactical Soccer Pitch -->
+                        <div class="mobile-pitch">
+                            <!-- Stripes -->
+                            <div class="pitch-stripes-mobile"></div>
+                            <!-- Markings -->
+                            <div class="pitch-markings-mobile">
+                                <!-- Halfway line -->
+                                <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-white/40 -translate-y-1/2"></div>
+                                <!-- Center Circle -->
+                                <div class="absolute top-1/2 left-1/2 w-24 h-24 rounded-full border-2 border-white/40 -translate-x-1/2 -translate-y-1/2"></div>
+                                <div class="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-white/60 -translate-x-1/2 -translate-y-1/2"></div>
+                                <!-- Top Penalty Box -->
+                                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-16 border-b-2 border-x-2 border-white/40"></div>
+                                <!-- Bottom Penalty Box -->
+                                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-16 border-t-2 border-x-2 border-white/40"></div>
+                            </div>
+
+                            <!-- Formation Rows & Slots -->
+                            <div id="mobile-pitch-slots-container" class="relative z-10 w-full h-full p-2.5 flex flex-col justify-between">
+                                <!-- Injected dynamically based on formation -->
+                            </div>
+                        </div>
+
+                        <!-- Substitutes & Reserves Bench Shelf (Below Pitch) -->
+                        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    <h4 class="font-['Outfit'] font-black text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                                        Bench & Reserves (<span id="mobile-bench-count">0</span>)
+                                    </h4>
+                                </div>
+                                <span class="text-[10px] text-slate-400 font-semibold">Tap to swap into pitch</span>
+                            </div>
+                            <div id="mobile-bench-cards-container" class="flex space-x-2 overflow-x-auto pb-1 pt-0.5">
+                                <!-- Injected dynamically with bench players -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. LIST VIEW CONTAINER -->
+                    <div id="mobile-list-view-container" class="hidden space-y-2 text-xs">
+                        <div id="inspect-squad-list" class="space-y-2">
+                            <!-- Squad players list rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Slot Assignment & Player Swap Modal -->
+            <div id="mobile-slot-assign-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+                <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-sm w-full p-4 sm:p-5 max-h-[85vh] overflow-y-auto space-y-3.5 shadow-2xl border border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-['Oswald'] font-black text-sm">
+                                <span id="mobile-assign-slot-pos-badge">ST</span>
+                            </div>
+                            <div>
+                                <h4 class="font-['Outfit'] font-black text-sm text-slate-900 dark:text-white" id="mobile-assign-slot-title">Assign Slot</h4>
+                                <span class="text-[10px] text-slate-400 font-semibold">Pick a player for this position</span>
+                            </div>
+                        </div>
+                        <button onclick="closeMobileSlotAssignModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-lg p-1">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- Currently assigned player banner (if any) -->
+                    <div id="mobile-assign-current-player-box" class="hidden p-2.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-400/40 flex items-center justify-between">
+                        <div class="flex items-center space-x-2 min-w-0">
+                            <img id="mobile-assign-current-p-photo" src="/assets/default_player.svg" class="w-8 h-8 rounded-full object-cover bg-white dark:bg-slate-700 border border-amber-400 flex-shrink-0" onerror="this.src='/assets/default_player.svg';">
+                            <div class="min-w-0">
+                                <span class="text-[10px] font-black text-amber-900 dark:text-amber-300 block uppercase">Currently Assigned</span>
+                                <span id="mobile-assign-current-p-name" class="font-black text-xs text-slate-900 dark:text-white block truncate">Player Name</span>
+                            </div>
+                        </div>
+                        <button onclick="removeCurrentPlayerFromSlot()" class="px-2.5 py-1 rounded-xl bg-rose-500 text-white font-black text-[10px] uppercase shadow-sm active:scale-95">
+                            Sub Off
+                        </button>
+                    </div>
+
+                    <!-- Available Candidates List -->
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider block">Available Squad Players</span>
+                        <div id="mobile-assign-candidates-list" class="space-y-1.5 max-h-60 overflow-y-auto pr-0.5">
+                            <!-- Candidates rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Player Full Bio & Stats Modal -->
+            <div id="mobile-player-details-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+                <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl border border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h3 class="font-['Outfit'] font-black text-base text-slate-900 dark:text-white flex items-center">
+                            <i class="fa-solid fa-id-card text-amber-500 mr-2"></i> Player Intelligence & Bio
+                        </h3>
+                        <button onclick="closeCurrentPlayerDetailsModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-lg p-1">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div id="mobile-player-details-content" class="space-y-3.5 text-xs">
+                        <!-- Populated dynamically with full bio & 30+ stats -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Action Confirmation Dialog -->
+            <div id="mobile-confirm-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+                <div id="mobile-confirm-box" class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl max-w-xs w-full p-6 text-center space-y-4 shadow-2xl">
+                    <div id="mobile-confirm-icon-wrap" class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-xl">
+                        <i id="mobile-confirm-icon" class="fa-solid fa-arrows-rotate"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 id="mobile-confirm-title" class="font-['Outfit'] font-black text-lg text-slate-900 dark:text-white">Switch Team?</h3>
+                        <p id="mobile-confirm-desc" class="text-xs text-slate-500 dark:text-slate-400 font-semibold leading-relaxed">Do you want to release your team so another friend can pick it?</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="closeMobileConfirm(false)" class="py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+                        <button onclick="closeMobileConfirm(true)" id="mobile-confirm-ok-btn" class="py-2.5 rounded-xl bg-amber-500 font-black text-xs text-slate-950 shadow">Release</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compact Sold Celebration Dialog -->
+            <div id="mobile-sold-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 transition-all duration-300">
+                <div id="mobile-sold-box" class="bg-white dark:bg-slate-900 border-2 border-amber-400 dark:border-amber-500 rounded-3xl max-w-xs w-full p-5 text-center space-y-3.5 shadow-2xl relative overflow-hidden transform scale-95 transition-transform duration-300">
+                    <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow">
+                        <i class="fa-solid fa-gavel"></i>
+                        <span>HAMMER DOWN - SOLD!</span>
+                    </div>
+
+                    <div class="flex items-center justify-center space-x-3 pt-1">
+                        <div class="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-slate-800 border-2 border-amber-400 overflow-hidden shadow-md flex-shrink-0">
+                            <img id="mobile-sold-player-photo" src="/assets/default_player.svg" alt="Sold Player" class="w-full h-full object-cover">
+                        </div>
+                        <div class="text-left flex-1 min-w-0">
+                            <h3 id="mobile-sold-player-name" class="font-['Outfit'] font-black text-base text-slate-900 dark:text-white truncate">Player Name</h3>
+                            <p id="mobile-sold-player-sub" class="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Transferred</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 dark:from-amber-950/40 dark:via-slate-800/80 dark:to-amber-950/40 p-3 rounded-2xl border border-amber-200 dark:border-amber-800/60 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">Acquired By</span>
+                        <div id="mobile-sold-winning-mgr" class="font-black text-sm text-slate-900 dark:text-amber-300 flex items-center justify-center space-x-1.5 truncate">
+                            <span>👑</span> <span>Real Galácticos</span>
+                        </div>
+                        <div class="pt-0.5">
+                            <span class="font-['Oswald'] text-2xl font-black text-emerald-600 dark:text-emerald-400" id="mobile-sold-final-price">₹450</span>
+                        </div>
+                    </div>
+
+                    <button onclick="dismissMobileSoldModal()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow active:scale-95 transition-all">
+                        Awesome 👍
+                    </button>
+                </div>
+            </div>
+
+            <!-- Compact Sad Unsold Dialog (Melancholic Theme) -->
+            <div id="mobile-unsold-overlay" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 transition-all duration-300">
+                <div id="mobile-unsold-box" class="bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-3xl max-w-xs w-full p-5 text-center space-y-3.5 shadow-2xl relative overflow-hidden transform scale-95 transition-transform duration-300">
+                    <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-black text-xs uppercase tracking-wider border border-slate-300 dark:border-slate-700">
+                        <i class="fa-solid fa-heart-crack"></i>
+                        <span>PLAYER UNSOLD</span>
+                    </div>
+
+                    <div class="flex items-center justify-center space-x-3 pt-1">
+                        <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 overflow-hidden shadow-md flex-shrink-0 grayscale-[35%]">
+                            <img id="mobile-unsold-p-photo" src="/assets/default_player.svg" alt="Unsold Player" class="w-full h-full object-cover">
+                        </div>
+                        <div class="text-left flex-1 min-w-0">
+                            <h3 id="mobile-unsold-p-name" class="font-['Outfit'] font-black text-base text-slate-900 dark:text-white truncate">Player Name</h3>
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">No bids placed</p>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                        The player was passed and returned to the auction pool.
+                    </p>
+
+                    <button onclick="dismissMobileUnsoldModal()" class="w-full py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-black text-xs uppercase tracking-wider border border-slate-300 dark:border-slate-700 active:scale-95 transition-all">
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Toast Notification -->
+            <div id="mobile-toast" class="fixed top-4 left-4 right-4 z-50 hidden transition-all duration-300">
+                <div class="bg-slate-900/95 backdrop-blur-md text-white rounded-2xl p-3.5 shadow-2xl border border-slate-700 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <span id="mobile-toast-icon" class="text-amber-400 font-bold"><i class="fa-solid fa-circle-info"></i></span>
+                        <span id="mobile-toast-text" class="text-xs font-bold text-slate-200"></span>
+                    </div>
+                    <button onclick="hideMobileToast()" class="text-slate-400 hover:text-white p-1 text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Canvas Confetti Library for Mobile -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Mobile Logic Script -->
+    <script>
+        // Unique Client Device ID
+        let clientId = localStorage.getItem('fifa_bidder_client_id');
+        if (!clientId) {
+            clientId = 'client_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+            localStorage.setItem('fifa_bidder_client_id', clientId);
+        }
+
+        let myManagerId = localStorage.getItem('fifa_claimed_manager_id') || null;
+        let myNickname = localStorage.getItem('fifa_bidder_nickname') || '';
+        let currentAuctionData = null;
+        let isInitialMobileLoad = true;
+        let mobileLastCelebratedTs = 0;
+        let mobileLastUnsoldTs = 0;
+        let mobileTimerInterval = null;
+        let mobileServerClockOffset = 0;
+        let mobileTimerEndTimestamp = 0;
+        let currentNomineeId = null;
+        let nomineeBufferEndTime = 0;
+        let nomineeBufferInterval = null;
+        let previousLeadingBidderId = null;
+
+        // Custom Studio State
+        let studioColor = 'gold';
+        let studioEmblem = 'crown';
+
+        const CLUB_NAME_SUGGESTIONS = [
+            'Royal Strikers FC', 'London Lions', 'Mumbai Mavericks', 'Paris Legends',
+            'Berlin Blitz', 'Madrid Monarchs', 'Tokyo Titans', 'Vanguard FC',
+            'Thunderbolts FC', 'Galáctico Elite', 'Atlas Warriors', 'Golden Eagles FC'
+        ];
+
+        function updateStudioCrestPreview() {
+            const clubNameInput = document.getElementById('studio-club-name');
+            const clubName = (clubNameInput ? clubNameInput.value : '') || 'Royal Strikers FC';
+            const previewBox = document.getElementById('studio-crest-preview');
+            if (previewBox && typeof generateClubCrestSVG === 'function') {
+                previewBox.innerHTML = generateClubCrestSVG(clubName, studioColor, studioEmblem, 110, 130);
+            }
+        }
+
+        function onStudioClubNameChange() {
+            updateStudioCrestPreview();
+        }
+
+        function setStudioColor(color) {
+            studioColor = color;
+            document.querySelectorAll('#studio-color-picker .color-swatch').forEach(btn => {
+                if (btn.getAttribute('data-color') === color) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            updateStudioCrestPreview();
+        }
+
+        function setStudioEmblem(emblem) {
+            studioEmblem = emblem;
+            document.querySelectorAll('#studio-emblem-picker .emblem-chip').forEach(btn => {
+                if (btn.getAttribute('data-emblem') === emblem) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            updateStudioCrestPreview();
+        }
+
+        function randomizeCustomClub() {
+            const randomName = CLUB_NAME_SUGGESTIONS[Math.floor(Math.random() * CLUB_NAME_SUGGESTIONS.length)];
+            const colors = ['gold', 'red', 'blue', 'emerald', 'purple', 'orange', 'cyan', 'obsidian'];
+            const emblems = ['crown', 'lion', 'eagle', 'lightning', 'ball', 'star', 'dragon', 'flame'];
+            
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            const randomEmblem = emblems[Math.floor(Math.random() * emblems.length)];
+            
+            const nameInput = document.getElementById('studio-club-name');
+            if (nameInput) nameInput.value = randomName;
+            
+            setStudioColor(randomColor);
+            setStudioEmblem(randomEmblem);
+        }
+
+        async function joinWithCustomClub() {
+            const clubNameInput = document.getElementById('studio-club-name');
+            const mgrNameInput = document.getElementById('studio-mgr-name');
+            
+            const clubName = (clubNameInput ? clubNameInput.value.trim() : '') || 'Royal Strikers FC';
+            const mgrName = (mgrNameInput ? mgrNameInput.value.trim() : '') || myNickname || 'Remote Bidder';
+            
+            myNickname = mgrName;
+            localStorage.setItem('fifa_bidder_nickname', myNickname);
+            
+            try {
+                const res = await fetch('/api/auction/claim_team', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        create_new: true,
+                        team_name: clubName,
+                        client_id: clientId,
+                        client_name: myNickname,
+                        color: studioColor,
+                        emblem: studioEmblem
+                    })
+                });
+                const data = await res.json();
+                if (data.error) {
+                    showMobileTopToast(data.error, 'warn');
+                    return;
+                }
+                
+                myManagerId = data.manager_id;
+                localStorage.setItem('fifa_claimed_manager_id', myManagerId);
+                showMobileTopToast(data.message || 'Club created successfully!', 'success');
+                fetchAuctionState();
+            } catch (e) {
+                console.error('Custom club creation error:', e);
+                showMobileTopToast('Failed to connect with custom club', 'warn');
+            }
+        }
+
+        function startNomineeBufferCountdown() {
+            if (nomineeBufferInterval) clearInterval(nomineeBufferInterval);
+
+            const updateBuffer = () => {
+                const remainingMs = nomineeBufferEndTime - Date.now();
+                const secondsLeft = Math.max(0, Math.ceil(remainingMs / 1000));
+
+                const bufferBanner = document.getElementById('mobile-nominee-buffer-banner');
+                const bufferCount = document.getElementById('mobile-buffer-count');
+                const biddingLockBanner = document.getElementById('mobile-bidding-lock-banner');
+                const biddingLockCount = document.getElementById('mobile-bidding-lock-count');
+                const biddingPanel = document.getElementById('mobile-bidding-panel');
+                const stageStatus = document.getElementById('stage-status');
+
+                if (remainingMs > 0) {
+                    // BUFFER ACTIVE (3s preview period)
+                    if (bufferBanner) bufferBanner.classList.remove('hidden');
+                    if (bufferCount) bufferCount.textContent = `${secondsLeft}s`;
+                    if (biddingLockBanner) biddingLockBanner.classList.remove('hidden');
+                    if (biddingLockCount) biddingLockCount.textContent = `${secondsLeft}s`;
+                    if (biddingPanel) {
+                        biddingPanel.classList.add('pointer-events-none');
+                        biddingPanel.classList.remove('opacity-50', 'opacity-40');
+                    }
+                    if (stageStatus) {
+                        stageStatus.className = 'px-2.5 py-1 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center space-x-1';
+                        stageStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-950 animate-ping mr-1"></span><span>STARTING IN ${secondsLeft}s</span>`;
+                    }
+                } else {
+                    // BUFFER EXPIRED -> LIVE BIDDING OPEN
+                    if (nomineeBufferInterval) {
+                        clearInterval(nomineeBufferInterval);
+                        nomineeBufferInterval = null;
+                    }
+                    if (bufferBanner) bufferBanner.classList.add('hidden');
+                    if (biddingLockBanner) biddingLockBanner.classList.add('hidden');
+                    if (biddingPanel) biddingPanel.classList.remove('opacity-50', 'opacity-40', 'pointer-events-none');
+                    if (stageStatus) {
+                        stageStatus.className = 'px-2.5 py-1 rounded-full bg-emerald-500 text-white font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center space-x-1';
+                        stageStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-white animate-ping mr-1"></span><span>LIVE ON BLOCK</span>';
+                    }
+                }
+            };
+
+            updateBuffer();
+            nomineeBufferInterval = setInterval(updateBuffer, 100);
+        }
+
+        function startMobileTimerCountdown() {
+            if (!mobileTimerInterval) {
+                mobileTimerInterval = setInterval(updateMobileTimerDisplay, 250);
+            }
+        }
+
+        function updateMobileTimerDisplay() {
+            const timerEl = document.getElementById('mobile-stage-timer');
+            if (!timerEl) return;
+
+            if (!currentAuctionData || !currentAuctionData.state || !currentAuctionData.state.is_active) {
+                timerEl.innerHTML = '<i class="fa-regular fa-clock text-amber-500 mr-1"></i> Live';
+                timerEl.className = 'text-slate-500 font-bold text-xs';
+                return;
+            }
+
+            const nowAdjusted = (Date.now() / 1000) - mobileServerClockOffset;
+            const timeLeft = Math.max(0, Math.ceil(mobileTimerEndTimestamp - nowAdjusted));
+
+            if (timeLeft <= 5 && timeLeft > 0) {
+                timerEl.innerHTML = `<i class="fa-solid fa-fire text-rose-500 mr-1 animate-ping"></i> <strong class="text-rose-600 font-black">${timeLeft}s</strong>`;
+                timerEl.className = 'text-rose-600 font-black text-xs animate-pulse';
+            } else if (timeLeft === 0) {
+                timerEl.innerHTML = `<i class="fa-solid fa-gavel text-rose-600 mr-1"></i> <strong class="text-rose-700 font-black">0s TIME UP</strong>`;
+                timerEl.className = 'text-rose-700 font-black text-xs';
+            } else {
+                timerEl.innerHTML = `<i class="fa-regular fa-clock text-amber-500 mr-1"></i> <strong class="text-slate-900 font-black">${timeLeft}s</strong>`;
+                timerEl.className = 'text-slate-700 font-bold text-xs';
+            }
+        }
+
+        function formatMoney(amount) {
+            if (amount === undefined || amount === null || isNaN(amount)) return '₹0';
+            return '₹' + Number(amount).toLocaleString('en-IN');
+        }
+
+        async function fetchAuctionState() {
+            try {
+                const res = await fetch('/api/auction/state');
+                const data = await res.json();
+                currentAuctionData = data;
+                
+                // If bidder has no claimed team or their claim was released, show lobby
+                const managers = data.managers || [];
+                const myClaim = managers.find(m => m.id === myManagerId && m.claimed_client_id === clientId);
+
+                if (!myManagerId || !myClaim) {
+                    showTeamSelectScreen(managers);
+                } else {
+                    showArenaScreen();
+                    updateMobileUI(data);
+                }
+            } catch (err) {
+                console.error('Fetch state error:', err);
+            }
+        }
+
+        function showTeamSelectScreen(managers) {
+            const screenSelect = document.getElementById('screen-team-select');
+            const screenBidding = document.getElementById('screen-bidding');
+            if (screenSelect) screenSelect.classList.remove('hidden');
+            if (screenBidding) screenBidding.classList.add('hidden');
+
+            const mgrNameInput = document.getElementById('studio-mgr-name');
+            if (mgrNameInput && !mgrNameInput.value && myNickname) {
+                mgrNameInput.value = myNickname;
+            }
+
+            const clubNameInput = document.getElementById('studio-club-name');
+            if (clubNameInput && !clubNameInput.value) {
+                clubNameInput.value = myNickname ? `${myNickname}'s Strikers` : 'Royal Strikers FC';
+            }
+
+            updateStudioCrestPreview();
+
+            const container = document.getElementById('lobby-teams-container');
+            if (!container || !managers) return;
+
+            container.innerHTML = managers.map(m => {
+                const isClaimedByMe = m.is_claimed && m.claimed_client_id === clientId;
+                const isClaimedByOther = m.is_claimed && m.claimed_client_id !== clientId;
+                const maxBid = m.max_bid !== undefined ? m.max_bid : m.budget;
+                const crestHtml = typeof generateClubCrestSVG === 'function' ? 
+                    generateClubCrestSVG(m.name, m.crest_color || 'gold', m.emblem || 'crown', 42, 50) : 
+                    `<span class="text-2xl">${m.avatar || '👑'}</span>`;
+
+                if (isClaimedByOther) {
+                    // LOCKED CARD
+                    return `
+                        <div class="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border-2 border-slate-200 dark:border-slate-700 opacity-60 flex items-center justify-between cursor-not-allowed">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-12 flex-shrink-0 flex items-center justify-center grayscale">${crestHtml}</div>
+                                <div>
+                                    <h3 class="font-['Outfit'] font-black text-sm text-slate-600 dark:text-slate-400">${m.name}</h3>
+                                    <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400 flex items-center mt-0.5">
+                                        <i class="fa-solid fa-lock mr-1"></i> Taken by ${m.claimed_by || 'Another Friend'}
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-black text-slate-400 font-mono">LOCKED</span>
+                        </div>
+                    `;
+                } else if (isClaimedByMe) {
+                    // ALREADY CLAIMED BY THIS DEVICE
+                    return `
+                        <div onclick="enterAsManager('${m.id}')" class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-500 dark:border-emerald-600 shadow-md flex items-center justify-between cursor-pointer transition-all active:scale-98">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-12 flex-shrink-0 flex items-center justify-center">${crestHtml}</div>
+                                <div>
+                                    <h3 class="font-['Outfit'] font-black text-base text-slate-900 dark:text-white">${m.name}</h3>
+                                    <span class="text-[10px] font-black text-emerald-700 dark:text-emerald-300 uppercase">👑 Your Active Team • Purse: ${formatMoney(m.budget)}</span>
+                                </div>
+                            </div>
+                            <button class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase shadow-sm">
+                                Enter →
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // AVAILABLE TO CLAIM
+                    return `
+                        <div onclick="claimManagerTeam('${m.id}')" class="p-3 rounded-2xl bg-white dark:bg-slate-900 border-2 border-amber-300 dark:border-amber-600/60 hover:border-amber-500 dark:hover:border-amber-400 shadow-md flex items-center justify-between cursor-pointer transition-all active:scale-98 group">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-12 flex-shrink-0 flex items-center justify-center">${crestHtml}</div>
+                                <div>
+                                    <h3 class="font-['Outfit'] font-black text-base text-slate-900 dark:text-white">${m.name}</h3>
+                                    <div class="flex items-center space-x-2 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                        <span>Purse: <strong class="text-emerald-600 dark:text-emerald-400">${formatMoney(m.budget)}</strong></span>
+                                        <span>•</span>
+                                        <span>Max Bid: <strong class="text-amber-600 dark:text-amber-400">${formatMoney(maxBid)}</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black text-xs uppercase shadow-sm border border-amber-300 group-hover:scale-105 transition-transform">
+                                👑 Claim
+                            </button>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        async function claimManagerTeam(managerId) {
+            const nameInput = document.getElementById('studio-mgr-name');
+            const nick = nameInput ? nameInput.value.trim() : myNickname;
+
+            if (!nick) {
+                showMobileTopToast('Please enter your nickname first!', 'warn');
+                if (nameInput) nameInput.focus();
+                return;
+            }
+
+            myNickname = nick;
+            localStorage.setItem('fifa_bidder_nickname', myNickname);
+
+            try {
+                const res = await fetch('/api/auction/claim_team', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        manager_id: managerId,
+                        client_id: clientId,
+                        client_name: myNickname
+                    })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    showMobileTopToast(data.error, 'warn');
+                    fetchAuctionState();
+                    return;
+                }
+
+                myManagerId = managerId;
+                localStorage.setItem('fifa_claimed_manager_id', myManagerId);
+                fetchAuctionState();
+            } catch (e) {
+                console.error('Claim error:', e);
+            }
+        }
+
+        function enterAsManager(managerId) {
+            myManagerId = managerId;
+            localStorage.setItem('fifa_claimed_manager_id', myManagerId);
+            showArenaScreen();
+            if (currentAuctionData) updateMobileUI(currentAuctionData);
+        }
+
+        async function switchMyTeam() {
+            const confirmed = await showMobileConfirm('Switch Team?', 'Do you want to release your team so another friend can pick it?');
+            if (confirmed) {
+                try {
+                    await fetch('/api/auction/release_team', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ manager_id: myManagerId, client_id: clientId })
+                    });
+                } catch (e) {}
+                myManagerId = null;
+                localStorage.removeItem('fifa_claimed_manager_id');
+                fetchAuctionState();
+            }
+        }
+
+        function showArenaScreen() {
+            const screenSelect = document.getElementById('screen-team-select');
+            const screenBidding = document.getElementById('screen-bidding');
+            if (screenSelect) screenSelect.classList.add('hidden');
+            if (screenBidding) screenBidding.classList.remove('hidden');
+        }
+
+        function updateMobileUI(data) {
+            const { state, current_player, leading_bidder, managers, last_sold, last_unsold } = data;
+
+            // 0. Sync Mobile Live Timer
+            if (state && state.server_time) {
+                mobileServerClockOffset = (Date.now() / 1000) - state.server_time;
+            }
+            if (state && state.timer_end_timestamp) {
+                mobileTimerEndTimestamp = state.timer_end_timestamp;
+            }
+            updateMobileTimerDisplay();
+            startMobileTimerCountdown();
+
+            // 1. Update my manager purse & Max Allowable Bid
+            const myMgr = (managers || []).find(m => m.id === myManagerId) || managers?.[0];
+            if (myMgr) {
+                const myAvatarEl = document.getElementById('mgr-avatar-display');
+                if (myAvatarEl) {
+                    myAvatarEl.innerHTML = typeof generateClubCrestSVG === 'function' ?
+                        generateClubCrestSVG(myMgr.name, myMgr.crest_color || 'gold', myMgr.emblem || 'crown', 48, 56) :
+                        `<span class="text-3xl">${myMgr.avatar || '👑'}</span>`;
+                }
+                document.getElementById('mgr-name-display').textContent = myMgr.name;
+                document.getElementById('mgr-budget-display').textContent = formatMoney(myMgr.budget);
+                
+                const squadCount = myMgr.player_count || 0;
+                const mySquadCountEl = document.getElementById('my-squad-count');
+                if (mySquadCountEl) mySquadCountEl.textContent = squadCount;
+                
+                const btnCountEl = document.getElementById('mgr-squad-btn-count');
+                if (btnCountEl) btnCountEl.textContent = squadCount;
+
+                const quotaEl = document.getElementById('mgr-squad-quota-display');
+                if (quotaEl) {
+                    quotaEl.textContent = `Squad: ${squadCount}/18 players`;
+                }
+
+                const maxBid = myMgr.max_bid !== undefined ? myMgr.max_bid : myMgr.budget;
+                const maxBidEl = document.getElementById('mgr-maxbid-display');
+                if (maxBidEl) {
+                    maxBidEl.textContent = formatMoney(maxBid);
+                }
+
+                const quotaHelpEl = document.getElementById('mgr-quota-help');
+                if (quotaHelpEl) {
+                    if (squadCount >= 18) {
+                        quotaHelpEl.textContent = '18-player quota achieved';
+                    } else {
+                        const needed = myMgr.remaining_slots_needed || 0;
+                        const res = myMgr.reserved_budget || 0;
+                        quotaHelpEl.textContent = `₹50 × ${needed} remaining (₹${res} res.)`;
+                    }
+                }
+            }
+
+            // Render Rival Managers Hub list
+            const rivalsList = document.getElementById('mobile-rivals-list');
+            if (rivalsList && managers) {
+                rivalsList.innerHTML = managers.map(m => {
+                    const isMe = m.id === myManagerId;
+                    const isClaimed = m.is_claimed;
+                    const maxBid = m.max_bid !== undefined ? m.max_bid : m.budget;
+                    const squadCount = m.player_count || 0;
+                    const crestHtml = typeof generateClubCrestSVG === 'function' ?
+                        generateClubCrestSVG(m.name, m.crest_color || 'gold', m.emblem || 'crown', 36, 42) :
+                        `<span class="text-2xl">${m.avatar || '👑'}</span>`;
+                    
+                    return `
+                        <div class="p-2.5 sm:p-3 rounded-2xl ${isMe ? 'bg-amber-500/10 dark:bg-amber-500/15 border-2 border-amber-400/60' : 'bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700'} flex items-center justify-between transition-all">
+                            <div class="flex items-center space-x-2.5 min-w-0">
+                                <div class="w-9 h-11 flex-shrink-0 flex items-center justify-center">${crestHtml}</div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center space-x-1.5">
+                                        <span class="font-['Outfit'] font-black text-xs text-slate-900 dark:text-white truncate">${m.name}</span>
+                                        ${isMe ? '<span class="text-[9px] font-black bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded-md uppercase font-sans">YOU</span>' : ''}
+                                    </div>
+                                    <div class="flex items-center space-x-1 text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 truncate">
+                                        ${isClaimed ? `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-0.5"></span><span class="truncate">${m.claimed_by || 'Online'}</span>` : '<span class="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 mr-0.5"></span><span>Unclaimed</span>'}
+                                        <span>•</span>
+                                        <span>Squad: <strong class="text-slate-800 dark:text-slate-200 font-bold">${squadCount}/18</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0 ml-1">
+                                <div class="text-right">
+                                    <span class="font-['Outfit'] font-black text-xs text-emerald-600 dark:text-emerald-400 block">${formatMoney(m.budget)}</span>
+                                    <span class="text-[9px] font-extrabold text-amber-700 dark:text-amber-400 block">Max: ${formatMoney(maxBid)}</span>
+                                </div>
+                                <button onclick="openInspectSquadModal('${m.id}')" class="px-2.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-amber-400 hover:text-slate-950 text-slate-700 dark:text-slate-200 font-black text-[10px] uppercase transition-all active:scale-95 flex items-center space-x-1" title="View Acquired Players">
+                                    <i class="fa-solid fa-users text-[10px]"></i>
+                                    <span>Squad</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const activeContent = document.getElementById('mobile-active-content');
+            const waitingContent = document.getElementById('mobile-waiting-content');
+            const biddingPanel = document.getElementById('mobile-bidding-panel');
+            const bidButtons = document.querySelectorAll('.bid-action-btn');
+            const soldToast = document.getElementById('mobile-sold-toast');
+            const soldText = document.getElementById('mobile-sold-text');
+
+            // 2. Check if active player is on the block
+            if (state.is_active && current_player) {
+                activeContent.classList.remove('hidden');
+                waitingContent.classList.add('hidden');
+                
+                // Detect fresh player nomination and trigger 3-second preparation buffer
+                if (current_player.id !== currentNomineeId) {
+                    currentNomineeId = current_player.id;
+                    nomineeBufferEndTime = Date.now() + 3000;
+
+                    playNominationIncomingSound();
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                    showMobileTopToast(`⚡ Next Nominee: ${current_player.name} (${current_player.overall_rating} ${current_player.position}) • Bidding in 3s!`, 'warn');
+
+                    startNomineeBufferCountdown();
+                } else if (!nomineeBufferInterval && Date.now() >= nomineeBufferEndTime) {
+                    biddingPanel.classList.remove('opacity-50', 'pointer-events-none');
+                }
+                
+                // Check if I am currently leading the bid (consecutive bidding prevention)
+                const isLeading = Boolean(leading_bidder && leading_bidder.id === myManagerId);
+                const isBufferActive = Date.now() < nomineeBufferEndTime;
+
+                // Outbid notification trigger
+                if (previousLeadingBidderId === myManagerId && leading_bidder && leading_bidder.id !== myManagerId && state.is_active) {
+                    showMobileTopToast(`⚠️ Outbid by ${leading_bidder.name}! Highest bid is ${formatMoney(state.current_bid)}. Tap to raise!`, 'warn');
+                    if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+                }
+                previousLeadingBidderId = leading_bidder ? leading_bidder.id : null;
+
+                const curBid = state.current_bid || 0;
+                const maxAllowable = myMgr ? (myMgr.max_bid !== undefined ? myMgr.max_bid : myMgr.budget) : Infinity;
+
+                const leadingLockBanner = document.getElementById('mobile-leading-lock-banner');
+                const leadingLockPrice = document.getElementById('mobile-leading-lock-price');
+                const customBidInput = document.getElementById('mobile-custom-bid');
+                const customBidBtn = document.getElementById('mobile-custom-bid-btn');
+
+                if (isLeading) {
+                    if (leadingLockBanner) leadingLockBanner.classList.remove('hidden');
+                    if (leadingLockPrice) leadingLockPrice.textContent = formatMoney(curBid);
+
+                    if (customBidInput) {
+                        customBidInput.disabled = true;
+                        customBidInput.classList.add('opacity-40', 'cursor-not-allowed');
+                    }
+                    if (customBidBtn) {
+                        customBidBtn.disabled = true;
+                        customBidBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+                    }
+
+                    [10, 25, 50, 100].forEach(inc => {
+                        const btn = document.getElementById(`mobile-bid-inc-${inc}`);
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+                            btn.classList.remove('opacity-30');
+                            const labelEl = btn.querySelector('.label-text');
+                            if (labelEl) labelEl.textContent = 'Leading Bid';
+                        }
+                    });
+                } else {
+                    if (leadingLockBanner) leadingLockBanner.classList.add('hidden');
+
+                    if (customBidInput) {
+                        customBidInput.disabled = isBufferActive;
+                        customBidInput.classList.remove('opacity-40', 'cursor-not-allowed');
+                    }
+                    if (customBidBtn) {
+                        customBidBtn.disabled = isBufferActive;
+                        customBidBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+                    }
+
+                    [10, 25, 50, 100].forEach(inc => {
+                        const btn = document.getElementById(`mobile-bid-inc-${inc}`);
+                        if (btn) {
+                            const targetBid = curBid + inc;
+                            const labelEl = btn.querySelector('.label-text');
+                            if (targetBid > maxAllowable) {
+                                btn.disabled = true;
+                                btn.classList.add('opacity-30', 'cursor-not-allowed');
+                                btn.classList.remove('opacity-40', 'pointer-events-none');
+                                if (labelEl) labelEl.textContent = 'Exceeds Max';
+                            } else {
+                                btn.disabled = isBufferActive;
+                                btn.classList.remove('opacity-30', 'opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+                                if (labelEl) {
+                                    labelEl.textContent = inc === 10 ? 'Raise 10' : inc === 25 ? 'Raise 25' : inc === 50 ? 'Power Raise' : 'Mega Bid';
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Determine position category & style
+                const ovr = Number(current_player.overall_rating) || 0;
+                const isGold = ovr >= 90;
+                const pos = (current_player.position || '').toUpperCase();
+                const posCat = current_player.position_category || (
+                    ['ST', 'CF', 'LW', 'RW', 'LF', 'RF', 'RS', 'LS'].includes(pos) ? 'FWD' :
+                    ['CAM', 'CM', 'CDM', 'LM', 'RM', 'LAM', 'RAM', 'LCM', 'RCM', 'LDM', 'RDM'].includes(pos) ? 'MID' :
+                    ['CB', 'LB', 'RB', 'LWB', 'RWB', 'LCB', 'RCB'].includes(pos) ? 'DEF' : 'GK'
+                );
+
+                const cardElem = document.getElementById('mobile-player-card');
+                const photoBox = document.getElementById('stage-p-photo-box');
+                const posBadge = document.getElementById('stage-p-pos');
+
+                if (cardElem) {
+                    cardElem.className = `border-2 rounded-3xl p-4 shadow-xl text-center relative overflow-hidden transition-all duration-300 ${
+                        isGold ? 'fut-card-gold' :
+                        posCat === 'FWD' ? 'fut-card-fwd' :
+                        posCat === 'MID' ? 'fut-card-mid' :
+                        posCat === 'DEF' ? 'fut-card-def' : 'fut-card-gk'
+                    }`;
+                }
+
+                if (photoBox) {
+                    photoBox.className = `w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden relative shadow-lg bg-white/40 dark:bg-slate-800/60 border-2 ${
+                        isGold ? 'border-amber-400 shadow-amber-500/40' :
+                        posCat === 'FWD' ? 'border-rose-400' :
+                        posCat === 'MID' ? 'border-blue-400' :
+                        posCat === 'DEF' ? 'border-emerald-400' : 'border-amber-400'
+                    }`;
+                }
+
+                if (posBadge) {
+                    posBadge.textContent = current_player.position;
+                    posBadge.className = `font-['Oswald'] text-xs font-black px-2.5 py-0.5 rounded-lg shadow-sm ${
+                        posCat === 'FWD' ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-400/50' :
+                        posCat === 'MID' ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-400/50' :
+                        posCat === 'DEF' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-400/50' :
+                        'bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/50'
+                    }`;
+                }
+
+                const clubName = current_player.club_name || 'Free Agent';
+                const basePrice = formatMoney(current_player.base_price || 50);
+
+                document.getElementById('stage-p-photo').src = current_player.photo_url || '/assets/default_player.svg';
+                document.getElementById('stage-p-ovr').textContent = current_player.overall_rating;
+                document.getElementById('stage-p-name').textContent = current_player.name;
+                
+                const clubDetailEl = document.getElementById('stage-p-club-detail');
+                if (clubDetailEl) {
+                    clubDetailEl.textContent = clubName;
+                }
+                const basePriceEl = document.getElementById('stage-p-base-price');
+                if (basePriceEl) {
+                    basePriceEl.textContent = basePrice;
+                }
+
+                const clubNameTopEl = document.getElementById('stage-p-club-name');
+                if (clubNameTopEl) {
+                    clubNameTopEl.textContent = clubName;
+                }
+
+                const clubLogo = document.getElementById('stage-p-club-logo');
+                if (clubLogo) {
+                    clubLogo.src = current_player.club_logo_url || '/assets/default_club.svg';
+                    clubLogo.title = clubName;
+                }
+
+                document.getElementById('stage-p-pac').textContent = current_player.card_pac;
+                document.getElementById('stage-p-sho').textContent = current_player.card_sho;
+                document.getElementById('stage-p-pas').textContent = current_player.card_pas;
+                document.getElementById('stage-p-dri').textContent = current_player.card_dri;
+                document.getElementById('stage-p-def').textContent = current_player.card_def;
+                document.getElementById('stage-p-phy').textContent = current_player.card_phy;
+
+                // Bind Key Attributes Quick Strip for instant preview during 3s buffer
+                const footEl = document.getElementById('stage-p-foot');
+                if (footEl) footEl.textContent = current_player.preferred_foot || 'Right';
+
+                const skillsEl = document.getElementById('stage-p-skills');
+                if (skillsEl) skillsEl.textContent = `${current_player.skill_moves || 3} ★`;
+
+                const weakfootEl = document.getElementById('stage-p-weakfoot');
+                if (weakfootEl) weakfootEl.textContent = `${current_player.weak_foot || 3} ★`;
+
+                const workrateEl = document.getElementById('stage-p-workrate');
+                if (workrateEl) workrateEl.textContent = current_player.work_rate || 'Med/Med';
+
+                document.getElementById('stage-bid-amount').textContent = formatMoney(state.current_bid);
+                const leadingText = leading_bidder ? `${leading_bidder.avatar} ${leading_bidder.name}` : 'Opening Price (No Bids Yet)';
+                document.getElementById('stage-leading-bidder').textContent = leadingText;
+
+                if (leading_bidder && leading_bidder.id === myManagerId) {
+                    document.getElementById('stage-leading-bidder').className = 'text-xs font-black text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 py-1 px-2.5 rounded-xl inline-block border border-emerald-300 dark:border-emerald-700 shadow-sm';
+                } else {
+                    document.getElementById('stage-leading-bidder').className = 'text-xs font-extrabold text-amber-900 dark:text-amber-300';
+                }
+
+            } else {
+                // WAITING STATE: No active player nominated
+                currentNomineeId = null;
+                if (nomineeBufferInterval) {
+                    clearInterval(nomineeBufferInterval);
+                    nomineeBufferInterval = null;
+                }
+                const bufferBanner = document.getElementById('mobile-nominee-buffer-banner');
+                if (bufferBanner) bufferBanner.classList.add('hidden');
+                const biddingLockBanner = document.getElementById('mobile-bidding-lock-banner');
+                if (biddingLockBanner) biddingLockBanner.classList.add('hidden');
+
+                activeContent.classList.add('hidden');
+                waitingContent.classList.remove('hidden');
+                biddingPanel.classList.add('pointer-events-none');
+                biddingPanel.classList.remove('opacity-40', 'opacity-50');
+                bidButtons.forEach(btn => btn.disabled = true);
+
+                const totalBought = (managers || []).reduce((acc, m) => acc + (m.player_count || 0), 0);
+                const isPreAuction = totalBought === 0 && (!last_sold || !last_sold.timestamp) && (!last_unsold || !last_unsold.timestamp);
+
+                const waitingTitle = document.getElementById('mobile-waiting-title');
+                const waitingSub = document.getElementById('mobile-waiting-sub');
+
+                if (isPreAuction) {
+                    if (waitingTitle) waitingTitle.textContent = 'Starting Auction Soon';
+                    if (waitingSub) waitingSub.textContent = 'Waiting for host to nominate the first player...';
+                    if (soldToast) soldToast.classList.add('hidden');
+                } else {
+                    if (waitingTitle) waitingTitle.textContent = 'Awaiting Next Nominee';
+                    if (waitingSub) waitingSub.textContent = 'Waiting for host to nominate a player...';
+                }
+
+                if (isInitialMobileLoad) {
+                    if (last_sold && last_sold.timestamp) mobileLastCelebratedTs = last_sold.timestamp;
+                    if (last_unsold && last_unsold.timestamp) mobileLastUnsoldTs = last_unsold.timestamp;
+                    isInitialMobileLoad = false;
+                }
+
+                // Check for sold celebration modal trigger
+                if (!isPreAuction && last_sold && last_sold.timestamp && (!last_unsold || last_sold.timestamp >= last_unsold.timestamp)) {
+                    if (soldToast) {
+                        soldToast.className = 'w-full bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-400 dark:border-emerald-600 rounded-2xl p-3 text-center space-y-1';
+                        soldToast.classList.remove('hidden');
+                    }
+                    if (soldText) {
+                        soldText.innerHTML = `<strong>${last_sold.player_name}</strong> transferred to <span class="text-amber-700 dark:text-amber-400">${last_sold.manager_avatar || ''} ${last_sold.manager_name}</span> for <strong class="text-emerald-600 dark:text-emerald-400">${formatMoney(last_sold.price)}</strong>!`;
+                    }
+
+                    if (last_sold.timestamp > mobileLastCelebratedTs) {
+                        mobileLastCelebratedTs = last_sold.timestamp;
+                        showMobileSoldModal(last_sold);
+                        playAuctionGavelSound();
+                        if (typeof confetti === 'function') {
+                            confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+                        }
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                    }
+                } else if (!isPreAuction && last_unsold && last_unsold.timestamp) {
+                    if (soldToast) {
+                        soldToast.className = 'w-full bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-400 dark:border-rose-600 rounded-2xl p-3 text-center space-y-1';
+                        soldToast.classList.remove('hidden');
+                    }
+                    if (soldText) {
+                        soldText.innerHTML = `<strong>${last_unsold.player_name}</strong> went <span class="text-rose-600 dark:text-rose-400 font-black">UNSOLD</span> (no bids placed).`;
+                    }
+
+                    if (last_unsold.timestamp > mobileLastUnsoldTs) {
+                        mobileLastUnsoldTs = last_unsold.timestamp;
+                        showMobileUnsoldModal(last_unsold);
+                        playSadUnsoldChime();
+                        if (navigator.vibrate) navigator.vibrate(200);
+                    }
+                } else {
+                    if (soldToast) soldToast.classList.add('hidden');
+                }
+            }
+        }
+
+        let mobileSoldDismissTimeout = null;
+        let mobileUnsoldDismissTimeout = null;
+
+        function showMobileSoldModal(soldInfo) {
+            const modal = document.getElementById('mobile-sold-modal');
+            const box = document.getElementById('mobile-sold-box');
+            if (!modal) return;
+
+            document.getElementById('mobile-sold-player-photo').src = soldInfo.player_photo || `/api/player_image/${soldInfo.player_id}`;
+            document.getElementById('mobile-sold-player-name').textContent = soldInfo.player_name;
+            document.getElementById('mobile-sold-player-sub').textContent = `Sold for ${formatMoney(soldInfo.price)}`;
+            const winnerCrestHtml = typeof generateClubCrestSVG === 'function' ?
+                generateClubCrestSVG(soldInfo.manager_name, 'gold', 'crown', 36, 42) :
+                `<span>${soldInfo.manager_avatar || '👑'}</span>`;
+            document.getElementById('mobile-sold-winning-mgr').innerHTML = `<div class="w-8 h-10 flex-shrink-0 flex items-center justify-center">${winnerCrestHtml}</div> <span>${soldInfo.manager_name}</span>`;
+            document.getElementById('mobile-sold-final-price').textContent = formatMoney(soldInfo.price);
+
+            modal.classList.remove('hidden');
+            if (box) {
+                setTimeout(() => box.classList.remove('scale-95'), 20);
+            }
+
+            if (mobileSoldDismissTimeout) clearTimeout(mobileSoldDismissTimeout);
+            mobileSoldDismissTimeout = setTimeout(() => {
+                dismissMobileSoldModal();
+            }, 4500);
+        }
+
+        function dismissMobileSoldModal() {
+            if (mobileSoldDismissTimeout) clearTimeout(mobileSoldDismissTimeout);
+            const modal = document.getElementById('mobile-sold-modal');
+            const box = document.getElementById('mobile-sold-box');
+            if (box) box.classList.add('scale-95');
+            setTimeout(() => {
+                if (modal) modal.classList.add('hidden');
+            }, 150);
+        }
+
+        function showMobileUnsoldModal(unsoldInfo) {
+            const overlay = document.getElementById('mobile-unsold-overlay');
+            const box = document.getElementById('mobile-unsold-box');
+            if (!overlay) return;
+
+            document.getElementById('mobile-unsold-p-photo').src = unsoldInfo.player_photo || `/api/player_image/${unsoldInfo.player_id}`;
+            document.getElementById('mobile-unsold-p-name').textContent = unsoldInfo.player_name;
+
+            overlay.classList.remove('hidden');
+            if (box) {
+                setTimeout(() => box.classList.remove('scale-95'), 20);
+            }
+
+            if (mobileUnsoldDismissTimeout) clearTimeout(mobileUnsoldDismissTimeout);
+            mobileUnsoldDismissTimeout = setTimeout(() => {
+                dismissMobileUnsoldModal();
+            }, 4500);
+        }
+
+        function dismissMobileUnsoldModal() {
+            if (mobileUnsoldDismissTimeout) clearTimeout(mobileUnsoldDismissTimeout);
+            const overlay = document.getElementById('mobile-unsold-overlay');
+            const box = document.getElementById('mobile-unsold-box');
+            if (box) box.classList.add('scale-95');
+            setTimeout(() => {
+                if (overlay) overlay.classList.add('hidden');
+            }, 150);
+        }
+
+        // ----------------- FORMATIONS & MOBILE PITCH ENGINE -----------------
+
+        const FORMATIONS = {
+            '4-3-3': {
+                name: '4-3-3 (Attack)',
+                rows: [
+                    [{ idx: 0, pos: 'LW' }, { idx: 1, pos: 'ST' }, { idx: 2, pos: 'RW' }],
+                    [{ idx: 3, pos: 'LCM' }, { idx: 4, pos: 'CAM' }, { idx: 5, pos: 'RCM' }],
+                    [{ idx: 6, pos: 'LB' }, { idx: 7, pos: 'LCB' }, { idx: 8, pos: 'RCB' }, { idx: 9, pos: 'RB' }],
+                    [{ idx: 10, pos: 'GK' }]
+                ]
+            },
+            '4-2-3-1': {
+                name: '4-2-3-1 (3 CAMs / 2 CDMs)',
+                rows: [
+                    [{ idx: 0, pos: 'ST' }],
+                    [{ idx: 1, pos: 'LAM' }, { idx: 2, pos: 'CAM' }, { idx: 3, pos: 'RAM' }],
+                    [{ idx: 4, pos: 'LDM' }, { idx: 5, pos: 'RDM' }],
+                    [{ idx: 6, pos: 'LB' }, { idx: 7, pos: 'LCB' }, { idx: 8, pos: 'RCB' }, { idx: 9, pos: 'RB' }],
+                    [{ idx: 10, pos: 'GK' }]
+                ]
+            },
+            '4-4-2': {
+                name: '4-4-2 (Classic Flat)',
+                rows: [
+                    [{ idx: 0, pos: 'LS' }, { idx: 1, pos: 'RS' }],
+                    [{ idx: 2, pos: 'LM' }, { idx: 3, pos: 'LCM' }, { idx: 4, pos: 'RCM' }, { idx: 5, pos: 'RM' }],
+                    [{ idx: 6, pos: 'LB' }, { idx: 7, pos: 'LCB' }, { idx: 8, pos: 'RCB' }, { idx: 9, pos: 'RB' }],
+                    [{ idx: 10, pos: 'GK' }]
+                ]
+            },
+            '4-1-2-1-2': {
+                name: '4-1-2-1-2 (Diamond Midfield)',
+                rows: [
+                    [{ idx: 0, pos: 'LS' }, { idx: 1, pos: 'RS' }],
+                    [{ idx: 2, pos: 'CAM' }],
+                    [{ idx: 3, pos: 'LM' }, { idx: 4, pos: 'RM' }],
+                    [{ idx: 5, pos: 'CDM' }],
+                    [{ idx: 6, pos: 'LB' }, { idx: 7, pos: 'LCB' }, { idx: 8, pos: 'RCB' }, { idx: 9, pos: 'RB' }],
+                    [{ idx: 10, pos: 'GK' }]
+                ]
+            },
+            '3-5-2': {
+                name: '3-5-2 (Wingback Attack)',
+                rows: [
+                    [{ idx: 0, pos: 'LS' }, { idx: 1, pos: 'RS' }],
+                    [{ idx: 2, pos: 'CAM' }],
+                    [{ idx: 3, pos: 'LM' }, { idx: 4, pos: 'LCM' }, { idx: 5, pos: 'RCM' }, { idx: 6, pos: 'RM' }],
+                    [{ idx: 7, pos: 'LCB' }, { idx: 8, pos: 'CB' }, { idx: 9, pos: 'RCB' }],
+                    [{ idx: 10, pos: 'GK' }]
+                ]
+            },
+            '4-3-2-1': {
+                name: '4-3-2-1 (Christmas Tree)',
+                rows: [
+                    [{ idx: 0, pos: 'ST' }],
+                    [{ idx: 1, pos: 'LF' }, { idx: 2, pos: 'RF' }],
+                    [{ idx: 3, pos: 'LCM' }, { idx: 4, pos: 'CM' }, { idx: 5, pos: 'RCM' }],
+                    [{ idx: 6, pos: 'LB' }, { idx: 7, pos: 'LCB' }, { idx: 8, pos: 'RCB' }, { idx: 9, pos: 'RB' }],
+                    [{ idx: 10, pos: 'GK' }]
+                ]
+            },
+            '5-3-2': {
+                name: '5-3-2 (Solid 5 Back)',
+                rows: [
+                    [{ idx: 0, pos: 'LS' }, { idx: 1, pos: 'RS' }],
+                    [{ idx: 2, pos: 'LCM' }, { idx: 3, pos: 'CAM' }, { idx: 4, pos: 'RCM' }],
+                    [{ idx: 5, pos: 'LWB' }, { idx: 6, pos: 'LCB' }, { idx: 7, pos: 'CB' }, { idx: 8, pos: 'RCB' }, { idx: 9, pos: 'RWB' }],
+                    [{ idx: 10, pos: 'GK' }]
+                ]
+            }
+        };
+
+        let managerCustomLineups = JSON.parse(localStorage.getItem('fifa_manager_lineups') || '{}');
+        let currentInspectingManagerId = null;
+        let mobileSquadViewMode = 'pitch';
+        let mobileActiveAssignSlotIdx = null;
+        let mobileActiveAssignSlotPos = '';
+
+        function saveMobileManagerLineups() {
+            try {
+                localStorage.setItem('fifa_manager_lineups', JSON.stringify(managerCustomLineups));
+            } catch (e) {}
+        }
+
+        function setMobileSquadViewMode(mode) {
+            mobileSquadViewMode = mode;
+            const pitchTab = document.getElementById('mobile-squad-tab-pitch');
+            const listTab = document.getElementById('mobile-squad-tab-list');
+            const pitchContainer = document.getElementById('mobile-pitch-view-container');
+            const listContainer = document.getElementById('mobile-list-view-container');
+
+            if (mode === 'pitch') {
+                if (pitchTab) pitchTab.className = 'flex-1 py-1.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm';
+                if (listTab) listTab.className = 'flex-1 py-1.5 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                if (pitchContainer) pitchContainer.classList.remove('hidden');
+                if (listContainer) listContainer.classList.add('hidden');
+            } else {
+                if (listTab) listTab.className = 'flex-1 py-1.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm';
+                if (pitchTab) pitchTab.className = 'flex-1 py-1.5 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center space-x-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                if (pitchContainer) pitchContainer.classList.add('hidden');
+                if (listContainer) listContainer.classList.remove('hidden');
+            }
+        }
+
+        function changeMobilePitchFormation() {
+            if (!currentInspectingManagerId) return;
+            const select = document.getElementById('mobile-pitch-formation-select');
+            if (!select) return;
+            const newForm = select.value;
+
+            if (!managerCustomLineups[currentInspectingManagerId]) {
+                managerCustomLineups[currentInspectingManagerId] = { formation: newForm, slots: {} };
+            } else {
+                managerCustomLineups[currentInspectingManagerId].formation = newForm;
+            }
+            saveMobileManagerLineups();
+
+            if (currentAuctionData && currentAuctionData.managers) {
+                const mgr = currentAuctionData.managers.find(m => m.id === currentInspectingManagerId);
+                if (mgr) renderMobileTacticalPitch(mgr);
+            }
+        }
+
+        function position_to_category_mobile(pos) {
+            pos = String(pos || '').toUpperCase().trim();
+            if (pos === 'GK') return 'GK';
+            if (['CB', 'LB', 'RB', 'LWB', 'RWB', 'LCB', 'RCB', 'SW'].includes(pos)) return 'DEF';
+            if (['CM', 'CDM', 'CAM', 'LM', 'RM', 'LDM', 'RDM', 'LCM', 'RCM', 'LAM', 'RAM'].includes(pos)) return 'MID';
+            return 'FWD';
+        }
+
+        function autoFillMobileSquadXI() {
+            if (!currentInspectingManagerId || !currentAuctionData || !currentAuctionData.managers) return;
+            const mgr = currentAuctionData.managers.find(m => m.id === currentInspectingManagerId);
+            if (!mgr || !mgr.roster || mgr.roster.length === 0) {
+                showMobileTopToast('No players in squad to auto-fill!', 'warn');
+                return;
+            }
+
+            const formKey = managerCustomLineups[currentInspectingManagerId]?.formation || '4-3-3';
+            const formDef = FORMATIONS[formKey] || FORMATIONS['4-3-3'];
+            const sortedPlayers = [...mgr.roster].sort((a, b) => b.overall_rating - a.overall_rating);
+            const assignedSlots = {};
+            const usedPlayerIds = new Set();
+
+            const allSlots = [];
+            formDef.rows.forEach(r => r.forEach(s => allSlots.push(s)));
+
+            // 1. Exact position match
+            allSlots.forEach(s => {
+                const match = sortedPlayers.find(p => !usedPlayerIds.has(p.id) && p.position === s.pos);
+                if (match) {
+                    assignedSlots[s.idx] = match.id;
+                    usedPlayerIds.add(match.id);
+                }
+            });
+
+            // 2. Position Category match
+            allSlots.forEach(s => {
+                if (!assignedSlots[s.idx]) {
+                    const cat = position_to_category_mobile(s.pos);
+                    const match = sortedPlayers.find(p => !usedPlayerIds.has(p.id) && p.position_category === cat);
+                    if (match) {
+                        assignedSlots[s.idx] = match.id;
+                        usedPlayerIds.add(match.id);
+                    }
+                }
+            });
+
+            // 3. Any available best player
+            allSlots.forEach(s => {
+                if (!assignedSlots[s.idx]) {
+                    const match = sortedPlayers.find(p => !usedPlayerIds.has(p.id));
+                    if (match) {
+                        assignedSlots[s.idx] = match.id;
+                        usedPlayerIds.add(match.id);
+                    }
+                }
+            });
+
+            managerCustomLineups[currentInspectingManagerId] = {
+                formation: formKey,
+                slots: assignedSlots
+            };
+            saveMobileManagerLineups();
+            renderMobileTacticalPitch(mgr);
+            showMobileTopToast('⚡ Best Starting XI auto-configured!', 'info');
+        }
+
+        function openInspectSquadModal(managerId) {
+            if (!currentAuctionData || !currentAuctionData.managers) return;
+            const mgr = currentAuctionData.managers.find(m => m.id === managerId);
+            if (!mgr) return;
+
+            currentInspectingManagerId = managerId;
+
+            const modal = document.getElementById('mobile-inspect-squad-modal');
+            const avatarEl = document.getElementById('inspect-mgr-avatar');
+            const nameEl = document.getElementById('inspect-mgr-name');
+            const subEl = document.getElementById('inspect-mgr-sub');
+            const listEl = document.getElementById('inspect-squad-list');
+
+            if (avatarEl) {
+                avatarEl.innerHTML = typeof generateClubCrestSVG === 'function' ?
+                    generateClubCrestSVG(mgr.name, mgr.crest_color || 'gold', mgr.emblem || 'crown', 40, 48) :
+                    mgr.avatar;
+            }
+            if (nameEl) nameEl.textContent = mgr.name;
+            const maxBid = mgr.max_bid !== undefined ? mgr.max_bid : mgr.budget;
+            if (subEl) subEl.textContent = `${mgr.player_count || 0}/18 Players • Purse: ${formatMoney(mgr.budget)} • Max Bid: ${formatMoney(maxBid)}`;
+
+            // Render List View
+            if (listEl) {
+                if (!mgr.roster || mgr.roster.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="py-8 text-center text-slate-400 font-bold text-xs space-y-1">
+                            <i class="fa-solid fa-clipboard-user text-2xl text-slate-300 dark:text-slate-600 block mb-1"></i>
+                            <p>No players acquired yet.</p>
+                            <p class="text-[10px] text-slate-400">Total Purse available: ${formatMoney(mgr.budget)}</p>
+                        </div>
+                    `;
+                } else {
+                    listEl.innerHTML = mgr.roster.map(p => `
+                        <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center space-x-2.5 min-w-0">
+                                <img src="${p.photo_url || '/assets/default_player.svg'}" class="w-9 h-9 rounded-xl object-cover bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex-shrink-0" onerror="this.src='/assets/default_player.svg';">
+                                <div class="min-w-0">
+                                    <span class="font-['Outfit'] font-black text-xs text-slate-900 dark:text-white block truncate">${p.name}</span>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block truncate">${p.position} • ${p.overall_rating} OVR • ${p.club_name || 'Free Agent'}</span>
+                                </div>
+                            </div>
+                            <span class="font-['Outfit'] font-black text-xs text-emerald-600 dark:text-emerald-400 font-sans flex-shrink-0 ml-2">${formatMoney(p.bought_price)}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Render Pitch View
+            renderMobileTacticalPitch(mgr);
+            setMobileSquadViewMode(mobileSquadViewMode || 'pitch');
+
+            modal.classList.remove('hidden');
+        }
+
+        function renderMobileTacticalPitch(mgr) {
+            const roster = mgr.roster || [];
+            const mgrData = managerCustomLineups[mgr.id] || { formation: '4-3-3', slots: {} };
+            const formKey = mgrData.formation || '4-3-3';
+            const formDef = FORMATIONS[formKey] || FORMATIONS['4-3-3'];
+
+            // Sync Formation Select
+            const formSelect = document.getElementById('mobile-pitch-formation-select');
+            if (formSelect) formSelect.value = formKey;
+
+            const assignedSlots = mgrData.slots || {};
+            const startingPlayerIds = new Set();
+            const playerMap = {};
+            roster.forEach(p => { playerMap[p.id] = p; });
+
+            // Validate assigned slots
+            Object.keys(assignedSlots).forEach(sIdx => {
+                const pId = assignedSlots[sIdx];
+                if (playerMap[pId]) {
+                    startingPlayerIds.add(pId);
+                } else {
+                    delete assignedSlots[sIdx];
+                }
+            });
+
+            // Auto-fill on first render if slots empty and squad has players
+            if (Object.keys(assignedSlots).length === 0 && roster.length > 0) {
+                autoFillMobileSquadXI();
+                return;
+            }
+
+            // Render pitch slots
+            const slotsContainer = document.getElementById('mobile-pitch-slots-container');
+            if (slotsContainer) {
+                slotsContainer.innerHTML = '';
+                formDef.rows.forEach(rowSlots => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'flex justify-around items-center w-full my-0.5';
+
+                    rowSlots.forEach(s => {
+                        const pId = assignedSlots[s.idx];
+                        const p = playerMap[pId];
+                        const slotDiv = document.createElement('div');
+                        slotDiv.className = `pitch-slot-mobile ${p ? 'filled' : ''} cursor-pointer active:scale-95 transition-all`;
+                        slotDiv.onclick = () => openMobileSlotAssignModal(s.idx, s.pos);
+
+                        if (p) {
+                            slotDiv.innerHTML = `
+                                <div class="absolute -top-1.5 -right-1 z-10 px-1.5 py-0.2 rounded-full bg-slate-900 text-amber-400 font-['Oswald'] font-black text-[9px] border border-amber-300 shadow">
+                                    ${p.overall_rating}
+                                </div>
+                                <img src="${p.photo_url || '/assets/default_player.svg'}" alt="${p.name}" class="w-8 h-8 rounded-full object-cover -mt-1 border border-amber-400 shadow-sm bg-white/40" onerror="this.src='/assets/default_player.svg';">
+                                <div class="text-[8px] font-black text-slate-950 px-1 py-0.2 bg-white/95 rounded mt-0.5 truncate max-w-[56px] text-center shadow-xs">
+                                    ${p.name.split(' ').pop()}
+                                </div>
+                            `;
+                        } else {
+                            slotDiv.innerHTML = `
+                                <span class="text-xs font-black text-white drop-shadow">${s.pos}</span>
+                                <span class="text-[8px] text-amber-300 font-bold mt-0.5">+ Tap</span>
+                            `;
+                        }
+
+                        rowDiv.appendChild(slotDiv);
+                    });
+
+                    slotsContainer.appendChild(rowDiv);
+                });
+            }
+
+            // Render Bench Players
+            const benchContainer = document.getElementById('mobile-bench-cards-container');
+            const benchCountEl = document.getElementById('mobile-bench-count');
+            const benchPlayers = roster.filter(p => !startingPlayerIds.has(p.id));
+
+            if (benchCountEl) benchCountEl.textContent = benchPlayers.length;
+
+            if (benchContainer) {
+                if (benchPlayers.length === 0) {
+                    benchContainer.innerHTML = `
+                        <div class="py-3 px-4 text-center text-slate-400 font-bold text-[11px] w-full">
+                            ${roster.length === 0 ? 'No players acquired yet.' : 'All squad players are currently in the starting XI.'}
+                        </div>
+                    `;
+                } else {
+                    benchContainer.innerHTML = benchPlayers.map(p => `
+                        <div onclick="openMobileSlotAssignModal(null, '${p.position}')" class="flex-shrink-0 w-24 p-2 rounded-2xl bg-white dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 text-center space-y-1 shadow-sm active:scale-95 cursor-pointer">
+                            <div class="relative w-9 h-9 mx-auto rounded-full overflow-hidden border border-slate-300 dark:border-slate-500 bg-slate-100 dark:bg-slate-600">
+                                <img src="${p.photo_url || '/assets/default_player.svg'}" class="w-full h-full object-cover" onerror="this.src='/assets/default_player.svg';">
+                                <span class="absolute bottom-0 right-0 px-1 py-0.2 bg-slate-900 text-amber-400 font-['Oswald'] font-black text-[8px] rounded">${p.overall_rating}</span>
+                            </div>
+                            <span class="font-['Outfit'] font-black text-[10px] text-slate-900 dark:text-white block truncate">${p.name.split(' ').pop()}</span>
+                            <span class="text-[9px] font-extrabold text-blue-600 dark:text-blue-400 block">${p.position}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+
+        function openMobileSlotAssignModal(slotIdx, slotPos) {
+            mobileActiveAssignSlotIdx = slotIdx;
+            mobileActiveAssignSlotPos = slotPos;
+
+            if (!currentInspectingManagerId || !currentAuctionData || !currentAuctionData.managers) return;
+            const mgr = currentAuctionData.managers.find(m => m.id === currentInspectingManagerId);
+            if (!mgr) return;
+
+            const modal = document.getElementById('mobile-slot-assign-modal');
+            const titleEl = document.getElementById('mobile-assign-slot-title');
+            const posBadgeEl = document.getElementById('mobile-assign-slot-pos-badge');
+            const curBox = document.getElementById('mobile-assign-current-player-box');
+            const curPhoto = document.getElementById('mobile-assign-current-p-photo');
+            const curName = document.getElementById('mobile-assign-current-p-name');
+            const listEl = document.getElementById('mobile-assign-candidates-list');
+
+            if (!modal) return;
+
+            if (posBadgeEl) posBadgeEl.textContent = slotPos || 'XI';
+            if (titleEl) titleEl.textContent = slotIdx !== null ? `Assign Position: ${slotPos}` : 'Assign to Starting XI';
+
+            const mgrData = managerCustomLineups[mgr.id] || { formation: '4-3-3', slots: {} };
+            const assignedSlots = mgrData.slots || {};
+            const assignedPlayerId = slotIdx !== null ? assignedSlots[slotIdx] : null;
+
+            if (assignedPlayerId) {
+                const curP = (mgr.roster || []).find(p => p.id === assignedPlayerId);
+                if (curP) {
+                    if (curBox) curBox.classList.remove('hidden');
+                    if (curPhoto) curPhoto.src = curP.photo_url || '/assets/default_player.svg';
+                    if (curName) curName.textContent = `${curP.name} (${curP.overall_rating} ${curP.position})`;
+                } else {
+                    if (curBox) curBox.classList.add('hidden');
+                }
+            } else {
+                if (curBox) curBox.classList.add('hidden');
+            }
+
+            // Candidates
+            const roster = mgr.roster || [];
+            if (listEl) {
+                if (roster.length === 0) {
+                    listEl.innerHTML = `<div class="py-6 text-center text-slate-400 font-bold text-xs">No players available in squad.</div>`;
+                } else {
+                    const sorted = [...roster].sort((a, b) => b.overall_rating - a.overall_rating);
+                    listEl.innerHTML = sorted.map(p => {
+                        const isMatch = p.position === slotPos;
+                        const isCatMatch = position_to_category_mobile(p.position) === position_to_category_mobile(slotPos);
+                        const isCurrentlyHere = p.id === assignedPlayerId;
+
+                        return `
+                            <div class="flex items-center justify-between p-2 rounded-2xl ${isCurrentlyHere ? 'bg-amber-500/15 border-2 border-amber-400' : 'bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700'}">
+                                <div class="flex items-center space-x-2 min-w-0">
+                                    <img src="${p.photo_url || '/assets/default_player.svg'}" class="w-8 h-8 rounded-full object-cover bg-white dark:bg-slate-700 border flex-shrink-0" onerror="this.src='/assets/default_player.svg';">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center space-x-1">
+                                            <span class="font-black text-xs text-slate-900 dark:text-white truncate">${p.name}</span>
+                                            <span class="font-['Oswald'] text-[10px] font-black text-amber-600 dark:text-amber-400">${p.overall_rating}</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1 text-[9px] font-bold mt-0.5">
+                                            <span class="px-1 py-0.2 rounded ${isMatch ? 'bg-emerald-500 text-white' : isCatMatch ? 'bg-blue-500 text-white' : 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300'}">${p.position}</span>
+                                            <span class="text-slate-400 truncate">${p.club_name || ''}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="assignPlayerToMobileSlot(${p.id})" class="px-3 py-1.5 rounded-xl ${isCurrentlyHere ? 'bg-slate-200 dark:bg-slate-700 text-slate-500' : 'bg-emerald-500 hover:bg-emerald-400 text-white'} font-black text-[10px] uppercase shadow-sm active:scale-95 flex-shrink-0">
+                                    ${isCurrentlyHere ? 'In Slot' : 'Select'}
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeMobileSlotAssignModal() {
+            const modal = document.getElementById('mobile-slot-assign-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function assignPlayerToMobileSlot(playerId) {
+            if (!currentInspectingManagerId) return;
+
+            if (!managerCustomLineups[currentInspectingManagerId]) {
+                managerCustomLineups[currentInspectingManagerId] = { formation: '4-3-3', slots: {} };
+            }
+            const slots = managerCustomLineups[currentInspectingManagerId].slots || {};
+
+            // If player was already in another slot, remove them from that slot (swap/move)
+            Object.keys(slots).forEach(k => {
+                if (slots[k] === playerId) {
+                    delete slots[k];
+                }
+            });
+
+            if (mobileActiveAssignSlotIdx !== null) {
+                slots[mobileActiveAssignSlotIdx] = playerId;
+            } else {
+                // Find first empty slot in formation
+                const formKey = managerCustomLineups[currentInspectingManagerId].formation || '4-3-3';
+                const formDef = FORMATIONS[formKey] || FORMATIONS['4-3-3'];
+                const allSlots = [];
+                formDef.rows.forEach(r => r.forEach(s => allSlots.push(s)));
+                const emptySlot = allSlots.find(s => !slots[s.idx]);
+                if (emptySlot) {
+                    slots[emptySlot.idx] = playerId;
+                } else {
+                    slots[0] = playerId;
+                }
+            }
+
+            managerCustomLineups[currentInspectingManagerId].slots = slots;
+            saveMobileManagerLineups();
+
+            closeMobileSlotAssignModal();
+
+            if (currentAuctionData && currentAuctionData.managers) {
+                const mgr = currentAuctionData.managers.find(m => m.id === currentInspectingManagerId);
+                if (mgr) renderMobileTacticalPitch(mgr);
+            }
+            showMobileTopToast('Player positioned in lineup!', 'info');
+        }
+
+        function removeCurrentPlayerFromSlot() {
+            if (!currentInspectingManagerId || mobileActiveAssignSlotIdx === null) return;
+            if (managerCustomLineups[currentInspectingManagerId]?.slots) {
+                delete managerCustomLineups[currentInspectingManagerId].slots[mobileActiveAssignSlotIdx];
+                saveMobileManagerLineups();
+            }
+            closeMobileSlotAssignModal();
+            if (currentAuctionData && currentAuctionData.managers) {
+                const mgr = currentAuctionData.managers.find(m => m.id === currentInspectingManagerId);
+                if (mgr) renderMobileTacticalPitch(mgr);
+            }
+            showMobileTopToast('Player moved to bench.', 'info');
+        }
+
+        function closeInspectSquadModal() {
+            const modal = document.getElementById('mobile-inspect-squad-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openMySquadModal() {
+            if (myManagerId) {
+                openInspectSquadModal(myManagerId);
+            }
+        }
+
+        function toggleMySquad() {
+            if (myManagerId) {
+                openInspectSquadModal(myManagerId);
+            }
+        }
+
+        async function openCurrentPlayerDetailsModal() {
+            if (!currentAuctionData || !currentAuctionData.current_player) {
+                showMobileTopToast('No player is currently on the auction block!', 'info');
+                return;
+            }
+
+            const p = currentAuctionData.current_player;
+            const modal = document.getElementById('mobile-player-details-modal');
+            const content = document.getElementById('mobile-player-details-content');
+
+            if (!modal || !content) return;
+            modal.classList.remove('hidden');
+
+            const posColor = p.position_category === 'FWD' ? 'bg-rose-500 text-white' :
+                             p.position_category === 'MID' ? 'bg-blue-500 text-white' :
+                             p.position_category === 'DEF' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-slate-950';
+
+            function getStatClass(val) {
+                const num = Number(val) || 0;
+                if (num >= 85) return 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-400/40 font-black';
+                if (num >= 80) return 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-400/40 font-black';
+                if (num >= 70) return 'bg-blue-500/15 text-blue-800 dark:text-blue-300 border-blue-400/40 font-bold';
+                return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-medium';
+            }
+
+            content.innerHTML = `
+                <!-- Player Header Card -->
+                <div class="flex items-center space-x-3 bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div class="w-16 h-16 rounded-2xl bg-white dark:bg-slate-700 border-2 border-amber-400 overflow-hidden shadow-sm flex-shrink-0">
+                        <img src="${p.photo_url || '/assets/default_player.svg'}" alt="${p.name}" class="w-full h-full object-cover object-top" onerror="this.src='/assets/default_player.svg';">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-['Oswald'] text-xl font-black text-slate-900 dark:text-white">${p.overall_rating}</span>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-md uppercase ${posColor}">${p.position}</span>
+                            <span class="text-[10px] font-bold text-slate-400">Pot: ${p.potential || p.overall_rating}</span>
+                        </div>
+                        <h4 class="font-['Outfit'] font-black text-base text-slate-900 dark:text-white truncate">${p.name}</h4>
+                        <div class="flex items-center space-x-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                            <span>${p.club_name || 'Free Agent'}</span>
+                            <span>•</span>
+                            <span>${p.nationality || ''}</span>
+                            <span>•</span>
+                            <span>${p.age || 25} yrs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bio / Physical Matrix -->
+                <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1.5 text-[11px]">
+                    <span class="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider block">Bio & Physical Profile</span>
+                    <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 pt-1">
+                        <div class="flex justify-between border-b border-slate-200 dark:border-slate-700/60 pb-1">
+                            <span class="text-slate-500 dark:text-slate-400 font-semibold">Preferred Foot:</span>
+                            <span class="font-bold text-slate-900 dark:text-white">${p.preferred_foot || 'Right'}</span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-200 dark:border-slate-700/60 pb-1">
+                            <span class="text-slate-500 dark:text-slate-400 font-semibold">Work Rate:</span>
+                            <span class="font-bold text-slate-900 dark:text-white">${p.work_rate || 'Med / Med'}</span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-200 dark:border-slate-700/60 pb-1">
+                            <span class="text-slate-500 dark:text-slate-400 font-semibold">Skill Moves:</span>
+                            <span class="font-black text-amber-500">${'★'.repeat(p.skill_moves || 3)}</span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-200 dark:border-slate-700/60 pb-1">
+                            <span class="text-slate-500 dark:text-slate-400 font-semibold">Weak Foot:</span>
+                            <span class="font-black text-amber-500">${'★'.repeat(p.weak_foot || 3)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500 dark:text-slate-400 font-semibold">Height / Weight:</span>
+                            <span class="font-bold text-slate-900 dark:text-white">${p.height_cm || 180}cm / ${p.weight_kg || 75}kg</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500 dark:text-slate-400 font-semibold">Base Price:</span>
+                            <span class="font-black text-emerald-600 dark:text-emerald-400">${formatMoney(p.base_price)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6 Core In-Depth Attributes -->
+                <div class="space-y-2.5">
+                    <span class="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider block">In-Depth Attributes</span>
+
+                    <!-- Category: Pace & Shooting -->
+                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                        <!-- Pace -->
+                        <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1">
+                            <div class="flex justify-between font-black text-xs text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-1">
+                                <span>Pace</span> <span class="text-amber-500 font-bold">${p.card_pac || p.pace || '--'}</span>
+                            </div>
+                            <div class="flex justify-between pt-0.5"><span class="text-slate-500">Acceleration</span><span class="px-1.5 rounded border ${getStatClass(p.acceleration)}">${p.acceleration || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Sprint Speed</span><span class="px-1.5 rounded border ${getStatClass(p.sprint_speed)}">${p.sprint_speed || '--'}</span></div>
+                        </div>
+                        <!-- Shooting -->
+                        <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1">
+                            <div class="flex justify-between font-black text-xs text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-1">
+                                <span>Shooting</span> <span class="text-amber-500 font-bold">${p.card_sho || p.shooting || '--'}</span>
+                            </div>
+                            <div class="flex justify-between pt-0.5"><span class="text-slate-500">Finishing</span><span class="px-1.5 rounded border ${getStatClass(p.finishing)}">${p.finishing || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Shot Power</span><span class="px-1.5 rounded border ${getStatClass(p.shot_power)}">${p.shot_power || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Long Shots</span><span class="px-1.5 rounded border ${getStatClass(p.long_shots)}">${p.long_shots || '--'}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Category: Passing & Dribbling -->
+                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                        <!-- Passing -->
+                        <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1">
+                            <div class="flex justify-between font-black text-xs text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-1">
+                                <span>Passing</span> <span class="text-amber-500 font-bold">${p.card_pas || p.passing || '--'}</span>
+                            </div>
+                            <div class="flex justify-between pt-0.5"><span class="text-slate-500">Vision</span><span class="px-1.5 rounded border ${getStatClass(p.vision)}">${p.vision || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Short Passing</span><span class="px-1.5 rounded border ${getStatClass(p.short_passing)}">${p.short_passing || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Long Passing</span><span class="px-1.5 rounded border ${getStatClass(p.long_passing)}">${p.long_passing || '--'}</span></div>
+                        </div>
+                        <!-- Dribbling -->
+                        <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1">
+                            <div class="flex justify-between font-black text-xs text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-1">
+                                <span>Dribbling</span> <span class="text-amber-500 font-bold">${p.card_dri || p.dribbling || '--'}</span>
+                            </div>
+                            <div class="flex justify-between pt-0.5"><span class="text-slate-500">Agility</span><span class="px-1.5 rounded border ${getStatClass(p.agility)}">${p.agility || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Ball Control</span><span class="px-1.5 rounded border ${getStatClass(p.ball_control)}">${p.ball_control || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Composure</span><span class="px-1.5 rounded border ${getStatClass(p.composure)}">${p.composure || '--'}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Category: Defending & Physicality -->
+                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                        <!-- Defending -->
+                        <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1">
+                            <div class="flex justify-between font-black text-xs text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-1">
+                                <span>Defending</span> <span class="text-amber-500 font-bold">${p.card_def || p.defending || '--'}</span>
+                            </div>
+                            <div class="flex justify-between pt-0.5"><span class="text-slate-500">Interceptions</span><span class="px-1.5 rounded border ${getStatClass(p.interceptions)}">${p.interceptions || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Standing Tackle</span><span class="px-1.5 rounded border ${getStatClass(p.standing_tackle)}">${p.standing_tackle || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Sliding Tackle</span><span class="px-1.5 rounded border ${getStatClass(p.sliding_tackle)}">${p.sliding_tackle || '--'}</span></div>
+                        </div>
+                        <!-- Physicality -->
+                        <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1">
+                            <div class="flex justify-between font-black text-xs text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-1">
+                                <span>Physicality</span> <span class="text-amber-500 font-bold">${p.card_phy || p.physic || '--'}</span>
+                            </div>
+                            <div class="flex justify-between pt-0.5"><span class="text-slate-500">Stamina</span><span class="px-1.5 rounded border ${getStatClass(p.stamina)}">${p.stamina || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Strength</span><span class="px-1.5 rounded border ${getStatClass(p.strength)}">${p.strength || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Aggression</span><span class="px-1.5 rounded border ${getStatClass(p.aggression)}">${p.aggression || '--'}</span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeCurrentPlayerDetailsModal() {
+            const modal = document.getElementById('mobile-player-details-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function playSadUnsoldChime() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                const notes = [
+                    { freq: 311.13, start: 0.0, dur: 0.45 },
+                    { freq: 261.63, start: 0.4, dur: 0.85 }
+                ];
+
+                notes.forEach(n => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.start);
+
+                    gain.gain.setValueAtTime(0.0001, ctx.currentTime + n.start);
+                    gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + n.start + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + n.start + n.dur);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + n.start);
+                    osc.stop(ctx.currentTime + n.start + n.dur + 0.05);
+                });
+            } catch (e) {
+                console.error('Sad audio error:', e);
+            }
+        }
+
+        async function mobilePlaceIncrement(inc) {
+            if (!currentAuctionData || !currentAuctionData.state || !currentAuctionData.state.is_active) return;
+
+            // Consecutive Bidding Check
+            if (currentAuctionData.leading_bidder && currentAuctionData.leading_bidder.id === myManagerId) {
+                showMobileToast('You are already leading the bid! Consecutive bidding is not allowed.', true);
+                return;
+            }
+
+            const curBid = currentAuctionData.state.current_bid || 0;
+            const newBid = curBid + inc;
+
+            const myMgr = (currentAuctionData.managers || []).find(m => m.id === myManagerId);
+            if (myMgr && myMgr.max_bid !== undefined && newBid > myMgr.max_bid) {
+                showMobileToast(`Bid of ₹${newBid} exceeds your maximum allowable limit of ₹${myMgr.max_bid}! (Need ₹${myMgr.reserved_budget || 0} reserved for remaining ${myMgr.remaining_slots_needed || 0} players to reach 18 squad).`, true);
+                return;
+            }
+
+            playBidTap();
+            await sendMobileBid(newBid);
+        }
+
+        function showMobileToast(msg, isError = false) {
+            const toast = document.getElementById('mobile-sold-toast');
+            const text = document.getElementById('mobile-sold-text');
+            if (!toast || !text) return;
+            toast.className = `w-full ${isError ? 'bg-rose-50 dark:bg-rose-950/70 border-rose-400 dark:border-rose-700 text-rose-900 dark:text-rose-200' : 'bg-emerald-50 dark:bg-emerald-950/70 border-emerald-400 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200'} border-2 rounded-2xl p-3 text-center space-y-1`;
+            text.textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                if (currentAuctionData && currentAuctionData.state && currentAuctionData.state.is_active) {
+                    toast.classList.add('hidden');
+                }
+            }, 3500);
+        }
+
+        async function mobilePlaceCustomBid() {
+            if (!currentAuctionData || !currentAuctionData.state || !currentAuctionData.state.is_active) return;
+
+            // Consecutive Bidding Check
+            if (currentAuctionData.leading_bidder && currentAuctionData.leading_bidder.id === myManagerId) {
+                showMobileToast('You are already leading the bid! Consecutive bidding is not allowed.', true);
+                return;
+            }
+
+            const input = document.getElementById('mobile-custom-bid');
+            const val = parseInt(input?.value);
+            if (!val || isNaN(val) || val <= 0) {
+                showMobileToast('Please enter a valid bid amount.', true);
+                return;
+            }
+
+            const myMgr = (currentAuctionData.managers || []).find(m => m.id === myManagerId);
+            if (myMgr && myMgr.max_bid !== undefined && val > myMgr.max_bid) {
+                showMobileToast(`Bid of ₹${val} exceeds your maximum allowable limit of ₹${myMgr.max_bid}! (Need ₹${myMgr.reserved_budget || 0} reserved for remaining ${myMgr.remaining_slots_needed || 0} players to reach 18 squad).`, true);
+                return;
+            }
+
+            playBidTap();
+            await sendMobileBid(val);
+            if (input) input.value = '';
+        }
+
+        async function sendMobileBid(amount) {
+            try {
+                if (navigator.vibrate) navigator.vibrate(50);
+                const res = await fetch('/api/auction/bid', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ manager_id: myManagerId, bid_amount: amount })
+                });
+                const data = await res.json();
+                if (data.error) {
+                    showMobileToast(data.error, true);
+                }
+                fetchAuctionState();
+            } catch (err) {
+                console.error('Bid error:', err);
+            }
+        }
+
+        function toggleMySquad() {
+            if (myManagerId) {
+                openInspectSquadModal(myManagerId);
+            }
+        }
+
+        // Heartbeat to keep team claimed
+        function sendHeartbeat() {
+            if (clientId) {
+                fetch('/api/auction/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: clientId })
+                }).catch(() => {});
+            }
+        }
+
+        // ----------------- MOBILE CUSTOM CONFIRM & TOAST ENGINE -----------------
+
+        let mobileConfirmResolver = null;
+
+        function showMobileConfirm(title, desc) {
+            return new Promise((resolve) => {
+                mobileConfirmResolver = resolve;
+                const modal = document.getElementById('mobile-confirm-modal');
+                const tEl = document.getElementById('mobile-confirm-title');
+                const dEl = document.getElementById('mobile-confirm-desc');
+                if (tEl) tEl.textContent = title;
+                if (dEl) dEl.textContent = desc;
+                if (modal) modal.classList.remove('hidden');
+            });
+        }
+
+        function closeMobileConfirm(confirmed) {
+            const modal = document.getElementById('mobile-confirm-modal');
+            if (modal) modal.classList.add('hidden');
+            if (mobileConfirmResolver) {
+                mobileConfirmResolver(confirmed);
+                mobileConfirmResolver = null;
+            }
+        }
+
+        let mobileToastTimeout = null;
+        function showMobileTopToast(msg, type = 'info') {
+            const toast = document.getElementById('mobile-toast');
+            const text = document.getElementById('mobile-toast-text');
+            const icon = document.getElementById('mobile-toast-icon');
+            if (!toast || !text) return;
+
+            text.textContent = msg;
+            if (type === 'warn') {
+                icon.className = 'text-amber-400 font-bold';
+                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                icon.className = 'text-emerald-400 font-bold';
+                icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            }
+
+            toast.classList.remove('hidden');
+            clearTimeout(mobileToastTimeout);
+            mobileToastTimeout = setTimeout(hideMobileToast, 3500);
+        }
+
+        function hideMobileToast() {
+            const toast = document.getElementById('mobile-toast');
+            if (toast) toast.classList.add('hidden');
+        }
+
+        // ----------------- MOBILE AUDIO SYNTHESIS -----------------
+
+        let mobileLastTapTime = 0;
+
+        function playBidTap() {
+            const now = Date.now();
+            if (now - mobileLastTapTime < 250) return;
+            mobileLastTapTime = now;
+
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                const playPokerFeltTap = (startTime, freq) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    osc.frequency.exponentialRampToValueAtTime(freq * 0.45, startTime + 0.035);
+
+                    gain.gain.setValueAtTime(0.08, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.035);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.04);
+                };
+
+                // Poker table double knuckle tap (tap-tap on felt)
+                playPokerFeltTap(ctx.currentTime, 220);          // Tap 1
+                playPokerFeltTap(ctx.currentTime + 0.065, 260);  // Tap 2
+            } catch (e) {}
+        }
+
+        function playAuctionGavelSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                // 1. Sharp wooden gavel impact click
+                const snapOsc = ctx.createOscillator();
+                const snapGain = ctx.createGain();
+                snapOsc.type = 'triangle';
+                snapOsc.frequency.setValueAtTime(900, ctx.currentTime);
+                snapOsc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.035);
+                snapGain.gain.setValueAtTime(0.35, ctx.currentTime);
+                snapGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+                snapOsc.connect(snapGain);
+                snapGain.connect(ctx.destination);
+                snapOsc.start(ctx.currentTime);
+                snapOsc.stop(ctx.currentTime + 0.04);
+
+                // 2. Resonant hardwood soundblock body
+                const bodyOsc = ctx.createOscillator();
+                const bodyGain = ctx.createGain();
+                bodyOsc.type = 'sine';
+                bodyOsc.frequency.setValueAtTime(240, ctx.currentTime);
+                bodyOsc.frequency.exponentialRampToValueAtTime(75, ctx.currentTime + 0.12);
+                bodyGain.gain.setValueAtTime(0.28, ctx.currentTime);
+                bodyGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+                bodyOsc.connect(bodyGain);
+                bodyGain.connect(ctx.destination);
+                bodyOsc.start(ctx.currentTime);
+                bodyOsc.stop(ctx.currentTime + 0.13);
+
+                // 3. Warm wood ring
+                const ringOsc = ctx.createOscillator();
+                const ringGain = ctx.createGain();
+                ringOsc.type = 'sine';
+                ringOsc.frequency.setValueAtTime(460, ctx.currentTime + 0.01);
+                ringOsc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.22);
+                ringGain.gain.setValueAtTime(0.12, ctx.currentTime + 0.01);
+                ringGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+                ringOsc.connect(ringGain);
+                ringGain.connect(ctx.destination);
+                ringOsc.start(ctx.currentTime + 0.01);
+                ringOsc.stop(ctx.currentTime + 0.23);
+            } catch (e) {}
+        }
+
+        function playNominationIncomingSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                // 4-note ascending fanfare chime: C5 -> E5 -> G5 -> C6
+                const notes = [
+                    { freq: 523.25, time: 0.0, dur: 0.12 },
+                    { freq: 659.25, time: 0.1, dur: 0.12 },
+                    { freq: 783.99, time: 0.2, dur: 0.15 },
+                    { freq: 1046.50, time: 0.32, dur: 0.45 }
+                ];
+
+                notes.forEach(n => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.time);
+                    gain.gain.setValueAtTime(0.001, ctx.currentTime + n.time);
+                    gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + n.time + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.time + n.dur);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + n.time);
+                    osc.stop(ctx.currentTime + n.time + n.dur + 0.05);
+                });
+            } catch (e) {}
+        }
+
+        // ----------------- MOBILE DARK / LIGHT THEME ENGINE -----------------
+
+        function updateThemeIcons(isDark) {
+            document.querySelectorAll('.theme-toggle-icon').forEach(el => {
+                el.className = isDark ? 'theme-toggle-icon fa-solid fa-sun text-amber-400' : 'theme-toggle-icon fa-solid fa-moon text-slate-700';
+            });
+        }
+
+        function initMobileTheme() {
+            const savedTheme = localStorage.getItem('fifa19_theme');
+            const isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            updateThemeIcons(isDark);
+        }
+
+        function toggleMobileTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('fifa19_theme', isDark ? 'dark' : 'light');
+            updateThemeIcons(isDark);
+            showMobileTopToast(`Switched to ${isDark ? 'Dark 🌙' : 'Light ☀️'} Mode`, 'info');
+        }
+
+        // Initialize immediately
+        initMobileTheme();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMobileTheme();
+            fetchAuctionState();
+            setInterval(fetchAuctionState, 1000); // 1.0s fast mobile sync
+            setInterval(sendHeartbeat, 10000); // 10s heartbeat
+        });
+    </script>
+</body>
+</html>
