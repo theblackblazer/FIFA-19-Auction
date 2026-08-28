@@ -2114,6 +2114,13 @@ async function nominatePlayerFromCard(playerId, basePrice) {
 }
 
 // Bidding Actions
+async function placeOpeningBid() {
+    if (!currentAuctionState || !currentAuctionState.state) return;
+    const curBid = currentAuctionState.state.current_bid || 50;
+    const mgrId = document.getElementById('active-bidder-select')?.value || 'mgr_1';
+    await sendBid(mgrId, curBid);
+}
+
 async function placeBidIncrement(inc) {
     if (!currentAuctionState || !currentAuctionState.state) return;
     

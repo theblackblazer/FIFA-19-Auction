@@ -499,6 +499,17 @@
                     <span>Bidding opens in <strong id="mobile-bidding-lock-count" class="font-['Oswald'] text-base text-amber-600 dark:text-amber-300">3s</strong> • Ready your bid!</span>
                 </div>
 
+                <!-- Dedicated Opening Bid Action (Shown when no bids placed yet) -->
+                <div id="mobile-opening-bid-container" class="hidden">
+                    <button id="mobile-opening-bid-btn" onclick="mobilePlaceOpeningBid()" class="bid-action-btn touch-btn w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 active:scale-98 text-white font-black text-sm uppercase tracking-wider shadow-lg flex items-center justify-between border-2 border-emerald-400/80 transition-all">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xl">⭐</span>
+                            <span class="font-['Outfit'] font-black text-sm uppercase">Bid Opening Price</span>
+                        </div>
+                        <span id="mobile-opening-bid-amount" class="font-['Oswald'] text-2xl font-black bg-white/20 px-3 py-0.5 rounded-xl shadow-inner leading-tight">₹50</span>
+                    </button>
+                </div>
+
                 <!-- Leading Lock Notice (Consecutive Bidding Prevention) -->
                 <div id="mobile-leading-lock-banner" class="hidden p-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 border-2 border-emerald-500 text-center space-y-1 shadow-md">
                     <div class="flex items-center justify-center space-x-2">
@@ -1346,18 +1357,26 @@
                 const curBid = state.current_bid || 0;
                 const maxAllowable = myMgr ? (myMgr.max_bid !== undefined ? myMgr.max_bid : myMgr.budget) : Infinity;
 
+                // Check if any bids have been placed yet on this active player
+                const hasNoBidsYet = !state.current_bidder_id;
+                const openingBidContainer = document.getElementById('mobile-opening-bid-container');
+                const openingBidBtn = document.getElementById('mobile-opening-bid-btn');
+                const openingBidAmount = document.getElementById('mobile-opening-bid-amount');
+
                 const leadingLockBanner = document.getElementById('mobile-leading-lock-banner');
                 const leadingLockPrice = document.getElementById('mobile-leading-lock-price');
                 const customBidInput = document.getElementById('mobile-custom-bid');
                 const customBidBtn = document.getElementById('mobile-custom-bid-btn');
 
                 if (isLeading) {
+                    if (openingBidContainer) openingBidContainer.classList.add('hidden');
                     if (leadingLockBanner) leadingLockBanner.classList.remove('hidden');
                     if (leadingLockPrice) leadingLockPrice.textContent = formatMoney(curBid);
 
                     if (customBidInput) {
                         customBidInput.disabled = true;
                         customBidInput.classList.add('opacity-40', 'cursor-not-allowed');
+                        customBidInput.placeholder = `Leading bid at ₹${curBid}`;
                     }
                     if (customBidBtn) {
                         customBidBtn.disabled = true;
@@ -1377,9 +1396,28 @@
                 } else {
                     if (leadingLockBanner) leadingLockBanner.classList.add('hidden');
 
+                    if (hasNoBidsYet) {
+                        if (openingBidContainer) openingBidContainer.classList.remove('hidden');
+                        if (openingBidAmount) openingBidAmount.textContent = formatMoney(curBid);
+
+                        if (openingBidBtn) {
+                            if (curBid > maxAllowable) {
+                                openingBidBtn.disabled = true;
+                                openingBidBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                            } else {
+                                openingBidBtn.disabled = isBufferActive;
+                                openingBidBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                            }
+                        }
+                    } else {
+                        if (openingBidContainer) openingBidContainer.classList.add('hidden');
+                    }
+
                     if (customBidInput) {
                         customBidInput.disabled = isBufferActive;
                         customBidInput.classList.remove('opacity-40', 'cursor-not-allowed');
+                        const minBid = hasNoBidsYet ? curBid : curBid + 1;
+                        customBidInput.placeholder = `Custom bid (min ₹${minBid})`;
                     }
                     if (customBidBtn) {
                         customBidBtn.disabled = isBufferActive;
@@ -2337,6 +2375,27 @@
             } catch (e) {
                 console.error('Sad audio error:', e);
             }
+        }
+
+        async function mobilePlaceOpeningBid() {
+            if (!currentAuctionData || !currentAuctionData.state || !currentAuctionData.state.is_active) return;
+
+            // Consecutive Bidding Check
+            if (currentAuctionData.leading_bidder && currentAuctionData.leading_bidder.id === myManagerId) {
+                showMobileToast('You are already leading the bid! Consecutive bidding is not allowed.', true);
+                return;
+            }
+
+            const curBid = currentAuctionData.state.current_bid || 50;
+
+            const myMgr = (currentAuctionData.managers || []).find(m => m.id === myManagerId);
+            if (myMgr && myMgr.max_bid !== undefined && curBid > myMgr.max_bid) {
+                showMobileToast(`Bid of ₹${curBid} exceeds your maximum allowable limit of ₹${myMgr.max_bid}! (Need ₹${myMgr.reserved_budget || 0} reserved for remaining ${myMgr.remaining_slots_needed || 0} players to reach 18 squad).`, true);
+                return;
+            }
+
+            playBidTap();
+            await sendMobileBid(curBid);
         }
 
         async function mobilePlaceIncrement(inc) {
