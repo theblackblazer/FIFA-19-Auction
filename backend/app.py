@@ -82,6 +82,132 @@ def index():
 def bidder_mobile():
     return send_from_directory(app.static_folder, "bidder.html")
 
+# ----------------- FIFA 19 PLAYER SPECIALITIES ENGINE -----------------
+
+def compute_player_specialities(p):
+    if not p:
+        return []
+    
+    specs = []
+    
+    acc = p.get("acceleration") or 0
+    spd = p.get("sprint_speed") or 0
+    dri = p.get("dribbling") or 0
+    agi = p.get("agility") or 0
+    bal = p.get("balance") or 0
+    rea = p.get("reactions") or 0
+    com = p.get("composure") or 0
+    pos = p.get("positioning") or 0
+    fin = p.get("finishing") or 0
+    shp = p.get("shot_power") or 0
+    lgs = p.get("long_shots") or 0
+    vol = p.get("volleys") or 0
+    pen = p.get("penalties") or 0
+    vis = p.get("vision") or 0
+    cro = p.get("crossing") or 0
+    fka = p.get("free_kick_accuracy") or 0
+    spa = p.get("short_passing") or 0
+    lpa = p.get("long_passing") or 0
+    cur = p.get("curve") or 0
+    itc = p.get("interceptions") or 0
+    hea = p.get("heading_accuracy") or 0
+    mrk = p.get("marking") or 0
+    stt = p.get("standing_tackle") or 0
+    slt = p.get("sliding_tackle") or 0
+    jmp = p.get("jumping") or 0
+    sta = p.get("stamina") or 0
+    str_ = p.get("strength") or 0
+    agg = p.get("aggression") or 0
+    ht = p.get("height_cm") or 180
+    wt = p.get("weight_kg") or 75
+    skills = p.get("skill_moves") or 3
+    position = (p.get("position") or "").upper()
+
+    gkd = p.get("gk_diving") or 0
+    gkh = p.get("gk_handling") or 0
+    gkk = p.get("gk_kicking") or 0
+    gkp = p.get("gk_positioning") or 0
+    gkr = p.get("gk_reflexes") or 0
+
+    if position == "GK":
+        if gkd >= 86 and gkr >= 86:
+            specs.append({"name": "Acrobatic GK", "icon": "fa-shield-cat", "color": "amber", "desc": "Spectacular diving & reflex shot-stopping"})
+        if gkp >= 86 and gkh >= 86:
+            specs.append({"name": "Traditional GK", "icon": "fa-hands", "color": "blue", "desc": "Commanding aerial handling and positional discipline"})
+        return specs
+
+    # 1. Speedster
+    if (acc + spd) >= 180:
+        specs.append({"name": "Speedster", "icon": "fa-bolt", "color": "amber", "desc": "Lightning pace & acceleration"})
+
+    # 2. Dribbler
+    if (dri >= 86 and agi >= 75) or (skills >= 5 and dri >= 85):
+        specs.append({"name": "Dribbler", "icon": "fa-wand-magic-sparkles", "color": "purple", "desc": "Elite ball control & agility"})
+
+    # 3. Distance Shooter
+    if lgs >= 86 and shp >= 86:
+        specs.append({"name": "Distance Shooter", "icon": "fa-bullseye", "color": "rose", "desc": "Lethal long-range shooting power"})
+
+    # 4. Playmaker
+    if vis >= 86 and spa >= 86 and lpa >= 73:
+        specs.append({"name": "Playmaker", "icon": "fa-brain", "color": "blue", "desc": "Master of vision and chance creation"})
+
+    # 5. Crosser
+    if cro >= 86 and cur >= 80:
+        specs.append({"name": "Crosser", "icon": "fa-share-nodes", "color": "cyan", "desc": "Pinpoint wing delivery & curve"})
+
+    # 6. Free Kick Specialist
+    if fka >= 86 and (cur >= 85 or shp >= 85):
+        specs.append({"name": "FK Specialist", "icon": "fa-futbol", "color": "emerald", "desc": "Deadly set-piece precision"})
+
+    # 7. Poacher
+    if (fin >= 85 and hea >= 85 and pos >= 85) or (fin >= 88 and pos >= 88):
+        specs.append({"name": "Poacher", "icon": "fa-crosshairs", "color": "red", "desc": "Instinctual predator in the 18-yard box"})
+
+    # 8. Clinical Finisher
+    if fin >= 86 and lgs >= 80:
+        specs.append({"name": "Clinical Finisher", "icon": "fa-fire", "color": "orange", "desc": "Ruthless accuracy in front of goal"})
+
+    # 9. Aerial Threat
+    if (hea >= 90 and (jmp >= 85 or ht >= 188)) or (hea >= 86 and ht >= 185 and jmp >= 80):
+        specs.append({"name": "Aerial Threat", "icon": "fa-plane-departure", "color": "sky", "desc": "Dominant in the air with towering leap"})
+
+    # 10. Tackling
+    if stt >= 86 and slt >= 85:
+        specs.append({"name": "Tackling", "icon": "fa-shield-halved", "color": "indigo", "desc": "Rock-solid tackling efficiency"})
+
+    # 11. Tactician
+    if itc >= 86 and rea >= 80:
+        specs.append({"name": "Tactician", "icon": "fa-compass", "color": "teal", "desc": "Anticipates play with elite interceptions"})
+
+    # 12. Strength
+    if (str_ >= 86 and wt >= 83) or str_ >= 90:
+        specs.append({"name": "Strength", "icon": "fa-dumbbell", "color": "amber", "desc": "Physical powerhouse"})
+
+    # 13. Acrobat
+    if (agi >= 90 and rea >= 80) or (agi >= 86 and jmp >= 86):
+        specs.append({"name": "Acrobat", "icon": "fa-person-running", "color": "fuchsia", "desc": "Extreme agility & body control"})
+
+    # 14. Engine
+    if sta >= 88 and (agi >= 70 or spa >= 75):
+        specs.append({"name": "Engine", "icon": "fa-gauge-high", "color": "lime", "desc": "High stamina covering full pitch"})
+
+    spec_names = {s["name"] for s in specs}
+
+    # 15. Complete Forward
+    if ("Poacher" in spec_names or "Clinical Finisher" in spec_names) and len(spec_names.intersection({"Speedster", "Dribbler", "Aerial Threat", "Distance Shooter", "Strength", "Acrobat"})) >= 2:
+        specs.insert(0, {"name": "Complete Forward", "icon": "fa-crown", "color": "yellow", "desc": "Ultimate all-round attacking superstar"})
+
+    # 16. Complete Midfielder
+    if "Playmaker" in spec_names and len(spec_names.intersection({"Distance Shooter", "Engine", "Dribbler", "Crosser", "FK Specialist", "Tackling", "Tactician"})) >= 2:
+        specs.insert(0, {"name": "Complete Midfielder", "icon": "fa-crown", "color": "yellow", "desc": "Dominates both attack and midfield control"})
+
+    # 17. Complete Defender
+    if "Tackling" in spec_names and "Tactician" in spec_names and len(spec_names.intersection({"Aerial Threat", "Strength", "Speedster"})) >= 1:
+        specs.insert(0, {"name": "Complete Defender", "icon": "fa-crown", "color": "yellow", "desc": "World-class defensive rock"})
+
+    return specs
+
 @app.route("/api/host_info")
 def get_host_info():
     import socket
@@ -106,6 +232,29 @@ def get_host_info():
                     tunnel_url = t
         except Exception:
             pass
+
+    # Detect if app is accessed via public domain (PythonAnywhere, Render, Heroku, or custom domain)
+    req_host = request.headers.get("X-Forwarded-Host") or request.headers.get("Host") or request.host or ""
+    req_proto = request.headers.get("X-Forwarded-Proto") or request.scheme or "http"
+    is_public_cloud = False
+    public_hosted_url = ""
+
+    if req_host:
+        host_lower = req_host.split(":")[0].lower()
+        # Exclude local addresses
+        is_local_addr = (
+            host_lower == "localhost" or 
+            host_lower == "127.0.0.1" or 
+            host_lower.startswith("192.168.") or 
+            host_lower.startswith("10.") or 
+            (host_lower.startswith("172.") and host_lower.split(".")[1].isdigit() and 16 <= int(host_lower.split(".")[1]) <= 31)
+        )
+        if not is_local_addr:
+            is_public_cloud = True
+            public_hosted_url = f"{req_proto}://{req_host}".rstrip("/")
+
+    if is_public_cloud:
+        tunnel_url = public_hosted_url
     
     if tunnel_url:
         tunnel_url = tunnel_url.rstrip("/")
@@ -116,7 +265,9 @@ def get_host_info():
         "local_bidder_url": f"http://{local_ip}:{port}/bidder",
         "public_tunnel_url": tunnel_url,
         "public_bidder_url": f"{tunnel_url}/bidder" if tunnel_url else "",
-        "is_tunnel_active": bool(tunnel_url)
+        "is_tunnel_active": bool(tunnel_url),
+        "is_public_cloud": is_public_cloud,
+        "public_hosted_url": public_hosted_url
     })
 
 @app.route("/<path:path>")
@@ -396,6 +547,7 @@ def get_player_detail(player_id):
     d["is_sold"] = bool(d.get("roster_id"))
     d["photo_url"] = f"/api/player_image/{d['id']}"
     d["club_logo_url"] = f"/api/team_image/{d['club_id']}" if d.get("club_id") else "/assets/default_club.svg"
+    d["specialities"] = compute_player_specialities(d)
     return jsonify(d)
 
 # ----------------- FILTER AUTOCOMPLETES -----------------
@@ -863,6 +1015,7 @@ def get_auction_state():
             current_player = dict(p_row)
             current_player["photo_url"] = f"/api/player_image/{current_player['id']}"
             current_player["club_logo_url"] = f"/api/team_image/{current_player['club_id']}" if current_player.get("club_id") else "/assets/default_club.svg"
+            current_player["specialities"] = compute_player_specialities(current_player)
 
     # Verify actual roster count to avoid stale last_sold at start of auction
     cursor.execute("SELECT COUNT(*) FROM auction_roster")

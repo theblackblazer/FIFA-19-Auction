@@ -1036,7 +1036,139 @@ function createPlayerCard(p) {
     return card;
 }
 
-// ----------------- PLAYER DETAIL MODAL (ALL 30+ STATS) -----------------
+// ----------------- FIFA 19 PLAYER SPECIALITIES ENGINE -----------------
+
+function computePlayerSpecialities(p) {
+    if (!p) return [];
+    if (p.specialities && Array.isArray(p.specialities) && p.specialities.length > 0) {
+        return p.specialities;
+    }
+
+    const specs = [];
+    const acc = Number(p.acceleration) || 0;
+    const spd = Number(p.sprint_speed) || 0;
+    const dri = Number(p.dribbling) || 0;
+    const agi = Number(p.agility) || 0;
+    const bal = Number(p.balance) || 0;
+    const rea = Number(p.reactions) || 0;
+    const pos = Number(p.positioning) || 0;
+    const fin = Number(p.finishing) || 0;
+    const shp = Number(p.shot_power) || 0;
+    const lgs = Number(p.long_shots) || 0;
+    const vis = Number(p.vision) || 0;
+    const cro = Number(p.crossing) || 0;
+    const fka = Number(p.free_kick_accuracy) || 0;
+    const spa = Number(p.short_passing) || 0;
+    const lpa = Number(p.long_passing) || 0;
+    const cur = Number(p.curve) || 0;
+    const itc = Number(p.interceptions) || 0;
+    const hea = Number(p.heading_accuracy) || 0;
+    const stt = Number(p.standing_tackle) || 0;
+    const slt = Number(p.sliding_tackle) || 0;
+    const jmp = Number(p.jumping) || 0;
+    const sta = Number(p.stamina) || 0;
+    const str = Number(p.strength) || 0;
+    const ht = Number(p.height_cm) || 180;
+    const wt = Number(p.weight_kg) || 75;
+    const skills = Number(p.skill_moves) || 3;
+    const position = (p.position || '').toUpperCase();
+
+    const gkd = Number(p.gk_diving) || 0;
+    const gkh = Number(p.gk_handling) || 0;
+    const gkp = Number(p.gk_positioning) || 0;
+    const gkr = Number(p.gk_reflexes) || 0;
+
+    if (position === 'GK') {
+        if (gkd >= 86 && gkr >= 86) {
+            specs.push({ name: 'Acrobatic GK', icon: 'fa-shield-cat', color: 'amber', desc: 'Spectacular diving and reflex shot-stopping' });
+        }
+        if (gkp >= 86 && gkh >= 86) {
+            specs.push({ name: 'Traditional GK', icon: 'fa-hands', color: 'blue', desc: 'Commanding aerial handling and positional discipline' });
+        }
+        return specs;
+    }
+
+    if ((acc + spd) >= 180) {
+        specs.push({ name: 'Speedster', icon: 'fa-bolt', color: 'amber', desc: 'Lightning pace & acceleration' });
+    }
+    if ((dri >= 86 && agi >= 75) || (skills >= 5 && dri >= 85)) {
+        specs.push({ name: 'Dribbler', icon: 'fa-wand-magic-sparkles', color: 'purple', desc: 'Elite ball control & agility' });
+    }
+    if (lgs >= 86 && shp >= 86) {
+        specs.push({ name: 'Distance Shooter', icon: 'fa-bullseye', color: 'rose', desc: 'Lethal long-range shooting power' });
+    }
+    if (vis >= 86 && spa >= 86 && lpa >= 73) {
+        specs.push({ name: 'Playmaker', icon: 'fa-brain', color: 'blue', desc: 'Master of vision and chance creation' });
+    }
+    if (cro >= 86 && cur >= 80) {
+        specs.push({ name: 'Crosser', icon: 'fa-share-nodes', color: 'cyan', desc: 'Pinpoint wing delivery & curve' });
+    }
+    if (fka >= 86 && (cur >= 85 || shp >= 85)) {
+        specs.push({ name: 'FK Specialist', icon: 'fa-futbol', color: 'emerald', desc: 'Deadly set-piece precision' });
+    }
+    if ((fin >= 85 && hea >= 85 && pos >= 85) || (fin >= 88 && pos >= 88)) {
+        specs.push({ name: 'Poacher', icon: 'fa-crosshairs', color: 'red', desc: 'Instinctual predator in the 18-yard box' });
+    }
+    if (fin >= 86 && lgs >= 80) {
+        specs.push({ name: 'Clinical Finisher', icon: 'fa-fire', color: 'orange', desc: 'Ruthless accuracy in front of goal' });
+    }
+    if ((hea >= 90 && (jmp >= 85 || ht >= 188)) || (hea >= 86 && ht >= 185 && jmp >= 80)) {
+        specs.push({ name: 'Aerial Threat', icon: 'fa-plane-departure', color: 'sky', desc: 'Dominant in the air with towering leap' });
+    }
+    if (stt >= 86 && slt >= 85) {
+        specs.push({ name: 'Tackling', icon: 'fa-shield-halved', color: 'indigo', desc: 'Rock-solid tackling efficiency' });
+    }
+    if (itc >= 86 && rea >= 80) {
+        specs.push({ name: 'Tactician', icon: 'fa-compass', color: 'teal', desc: 'Anticipates play with elite interceptions' });
+    }
+    if ((str >= 86 && wt >= 83) || str >= 90) {
+        specs.push({ name: 'Strength', icon: 'fa-dumbbell', color: 'amber', desc: 'Physical powerhouse' });
+    }
+    if ((agi >= 90 && rea >= 80) || (agi >= 86 && jmp >= 86)) {
+        specs.push({ name: 'Acrobat', icon: 'fa-person-running', color: 'fuchsia', desc: 'Extreme agility & body control' });
+    }
+    if (sta >= 88 && (agi >= 70 || spa >= 75)) {
+        specs.push({ name: 'Engine', icon: 'fa-gauge-high', color: 'lime', desc: 'High stamina covering full pitch' });
+    }
+
+    const specNames = new Set(specs.map(s => s.name));
+    if ((specNames.has('Poacher') || specNames.has('Clinical Finisher')) && 
+        ['Speedster', 'Dribbler', 'Aerial Threat', 'Distance Shooter', 'Strength', 'Acrobat'].filter(x => specNames.has(x)).length >= 2) {
+        specs.unshift({ name: 'Complete Forward', icon: 'fa-crown', color: 'yellow', desc: 'Ultimate all-round attacking superstar' });
+    }
+    if (specNames.has('Playmaker') && 
+        ['Distance Shooter', 'Engine', 'Dribbler', 'Crosser', 'FK Specialist', 'Tackling', 'Tactician'].filter(x => specNames.has(x)).length >= 2) {
+        specs.unshift({ name: 'Complete Midfielder', icon: 'fa-crown', color: 'yellow', desc: 'Dominates both attack and midfield control' });
+    }
+    if (specNames.has('Tackling') && specNames.has('Tactician') && 
+        ['Aerial Threat', 'Strength', 'Speedster'].filter(x => specNames.has(x)).length >= 1) {
+        specs.unshift({ name: 'Complete Defender', icon: 'fa-crown', color: 'yellow', desc: 'World-class defensive rock' });
+    }
+
+    return specs;
+}
+
+function getSpecialityBadgeStyle(color) {
+    switch (color) {
+        case 'yellow': return 'bg-amber-100 dark:bg-amber-950/70 border-amber-400 text-amber-950 dark:text-amber-200 font-black ring-1 ring-amber-400/50 shadow-sm';
+        case 'amber': return 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 text-amber-900 dark:text-amber-200';
+        case 'rose':
+        case 'red': return 'bg-rose-50 dark:bg-rose-950/50 border-rose-300 text-rose-900 dark:text-rose-200';
+        case 'orange': return 'bg-orange-50 dark:bg-orange-950/50 border-orange-300 text-orange-900 dark:text-orange-200';
+        case 'purple':
+        case 'fuchsia': return 'bg-purple-50 dark:bg-purple-950/50 border-purple-300 text-purple-900 dark:text-purple-200';
+        case 'blue':
+        case 'sky':
+        case 'cyan': return 'bg-blue-50 dark:bg-blue-950/50 border-blue-300 text-blue-900 dark:text-blue-200';
+        case 'emerald':
+        case 'lime':
+        case 'teal': return 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 text-emerald-900 dark:text-emerald-200';
+        case 'indigo': return 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-300 text-indigo-900 dark:text-indigo-200';
+        default: return 'bg-slate-100 dark:bg-slate-800 border-slate-300 text-slate-900 dark:text-slate-200';
+    }
+}
+
+// ----------------- PLAYER DETAIL MODAL (ALL 30+ STATS & SPECIALITIES) -----------------
 
 async function openPlayerModal(playerId) {
     const modal = document.getElementById('player-modal');
@@ -1048,6 +1180,7 @@ async function openPlayerModal(playerId) {
     try {
         const res = await fetch(`/api/players/${playerId}`);
         const p = await res.json();
+        const specialities = computePlayerSpecialities(p);
         
         const posColor = p.position_category === 'FWD' ? 'text-rose-600' :
                          p.position_category === 'MID' ? 'text-blue-600' :
@@ -1094,6 +1227,30 @@ async function openPlayerModal(playerId) {
                         <span>Wage: <strong class="text-slate-900">${formatMoney(p.wage_eur)}/wk</strong></span>
                         <span>Auction Base: <strong class="text-amber-600 text-sm font-['Outfit']">${formatMoney(p.base_price)}</strong></span>
                     </div>
+                </div>
+            </div>
+
+            <!-- FIFA 19 Player Specialities & Trait Badges Section -->
+            <div class="bg-gradient-to-r from-slate-50 via-amber-50/50 to-slate-50 p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-2">
+                <div class="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                    <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                        <i class="fa-solid fa-medal text-amber-500 text-sm"></i>
+                        <span>FIFA 19 Player Specialities (${specialities.length})</span>
+                    </h4>
+                    <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Official In-Game Traits</span>
+                </div>
+                <div class="flex flex-wrap gap-2 pt-1">
+                    ${specialities.length > 0 ? specialities.map(s => `
+                        <div class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-black shadow-sm transition-all hover:scale-105 cursor-default ${getSpecialityBadgeStyle(s.color)}" title="${s.desc}">
+                            <i class="fa-solid ${s.icon}"></i>
+                            <span>${s.name}</span>
+                        </div>
+                    `).join('') : `
+                        <div class="text-xs text-slate-400 italic py-1 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-circle-check text-slate-300"></i>
+                            <span>Standard Player Profile (No Elite Speciality Badges)</span>
+                        </div>
+                    `}
                 </div>
             </div>
 
@@ -1818,6 +1975,23 @@ function createBigStageCard(p) {
                     <span class="text-slate-500 dark:text-slate-400 block text-[8px] uppercase">Weak Foot</span> ★${p.weak_foot || 3}
                 </div>
             </div>
+
+            <!-- FIFA 19 Player Specialities Strip -->
+            ${(() => {
+                const specs = computePlayerSpecialities(p);
+                if (!specs || specs.length === 0) return '';
+                return `
+                    <div class="mt-2 pt-2 border-t border-slate-300/80 dark:border-slate-700/80 flex flex-wrap gap-1 justify-center items-center">
+                        ${specs.slice(0, 3).map(s => `
+                            <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[9px] font-black shadow-xs ${getSpecialityBadgeStyle(s.color)}" title="${s.desc}">
+                                <i class="fa-solid ${s.icon} text-[8px]"></i>
+                                <span>${s.name}</span>
+                            </span>
+                        `).join('')}
+                        ${specs.length > 3 ? `<span class="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 self-center">+${specs.length - 3} more</span>` : ''}
+                    </div>
+                `;
+            })()}
         </div>
     `;
 }
@@ -3147,14 +3321,50 @@ function updateConnectModalUI() {
     const btnLocal = document.getElementById('btn-mode-local');
 
     const info = cachedHostInfo || {};
-    const tunnelUrl = info.public_tunnel_url || '';
-    const publicBidderUrl = tunnelUrl ? `${tunnelUrl}/bidder` : '';
-    const localBidderUrl = info.local_bidder_url || `${window.location.origin}/bidder`;
+    const curOrigin = window.location.origin ? window.location.origin.replace(/\/+$/, '') : '';
+    const curHostname = window.location.hostname || '';
 
-    if (tunnelUrl) {
+    // Check if hosted on a public domain (like PythonAnywhere, custom domain, Render, etc.)
+    const isPublicDomain = Boolean(
+        curHostname && 
+        curHostname !== 'localhost' && 
+        curHostname !== '127.0.0.1' && 
+        !curHostname.startsWith('192.168.') && 
+        !curHostname.startsWith('10.') && 
+        !curHostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./)
+    );
+
+    // Prefer Cloudflare tunnel, then public origin (PythonAnywhere, etc.), then info local bidder url
+    const tunnelUrl = info.public_tunnel_url || (isPublicDomain ? curOrigin : '');
+    const publicBidderUrl = tunnelUrl ? `${tunnelUrl}/bidder` : (isPublicDomain ? `${curOrigin}/bidder` : '');
+    const localBidderUrl = (isPublicDomain ? `${curOrigin}/bidder` : (info.local_bidder_url || `${curOrigin}/bidder`));
+
+    const isLivePublic = Boolean(publicBidderUrl && (isPublicDomain || info.is_public_cloud || (tunnelUrl && tunnelUrl.includes('trycloudflare.com'))));
+
+    if (btnCloudflare) {
+        if (isPublicDomain) {
+            btnCloudflare.innerHTML = `<i class="fa-solid fa-earth-americas text-emerald-600"></i><span>Online Link (${curHostname})</span>`;
+        } else {
+            btnCloudflare.innerHTML = '<i class="fa-solid fa-earth-americas text-emerald-600"></i><span>Cloudflare Online (Internet)</span>';
+        }
+    }
+
+    if (btnLocal) {
+        if (isPublicDomain) {
+            btnLocal.innerHTML = '<i class="fa-solid fa-link text-blue-600"></i><span>Direct Web Link</span>';
+        } else {
+            btnLocal.innerHTML = '<i class="fa-solid fa-wifi text-blue-600"></i><span>Same Home Wi-Fi</span>';
+        }
+    }
+
+    if (isLivePublic) {
         if (statusBadge) {
             statusBadge.className = 'inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black border border-emerald-300';
-            statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span><span>Cloudflare Live Tunnel Active</span>';
+            if (isPublicDomain) {
+                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span><span>Live Online Server Active (${curHostname})</span>`;
+            } else {
+                statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span><span>Cloudflare Live Tunnel Active</span>';
+            }
         }
     } else {
         if (statusBadge) {
@@ -3169,15 +3379,15 @@ function updateConnectModalUI() {
         if (btnLocal) btnLocal.className = 'flex-1 py-2 px-3 rounded-xl font-bold transition-all flex items-center justify-center space-x-1.5 text-slate-500 hover:text-slate-900';
         
         activeUrl = publicBidderUrl || localBidderUrl;
-        if (label) label.textContent = 'Cloudflare Online Bidding URL';
-        if (qrLabel) qrLabel.textContent = tunnelUrl ? 'Scan with Phone Camera for Cloudflare Online Link' : 'Connecting to Cloudflare... Scan for Local Link';
+        if (label) label.textContent = isPublicDomain ? `Online Bidding URL (${curHostname})` : 'Cloudflare Online Bidding URL';
+        if (qrLabel) qrLabel.textContent = isLivePublic ? `Scan with Phone Camera to Join from Anywhere!` : 'Connecting to Cloudflare... Scan for Local Link';
     } else {
         if (btnLocal) btnLocal.className = 'flex-1 py-2 px-3 rounded-xl font-black transition-all flex items-center justify-center space-x-1.5 bg-white text-slate-900 shadow-sm';
         if (btnCloudflare) btnCloudflare.className = 'flex-1 py-2 px-3 rounded-xl font-bold transition-all flex items-center justify-center space-x-1.5 text-slate-500 hover:text-slate-900';
 
         activeUrl = localBidderUrl;
-        if (label) label.textContent = 'Same Wi-Fi Local Bidding URL';
-        if (qrLabel) qrLabel.textContent = 'Scan for Same Home Wi-Fi Network Link';
+        if (label) label.textContent = isPublicDomain ? 'Direct Bidding URL' : 'Same Wi-Fi Local Bidding URL';
+        if (qrLabel) qrLabel.textContent = isPublicDomain ? 'Scan to Join Online Auction' : 'Scan for Same Home Wi-Fi Network Link';
     }
 
     if (input) input.value = activeUrl;

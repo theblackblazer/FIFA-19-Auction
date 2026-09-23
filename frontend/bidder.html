@@ -455,6 +455,9 @@
                         </div>
                     </div>
 
+                    <!-- FIFA 19 Player Specialities Strip -->
+                    <div id="stage-p-specialities" class="mt-2 flex flex-wrap gap-1 justify-center items-center"></div>
+
                     <!-- Current Highest Bid Banner -->
                     <div class="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-700/80 bg-amber-500/15 border border-amber-400/40 rounded-2xl p-3">
                         <span class="text-[10px] uppercase font-black tracking-widest text-slate-600 dark:text-slate-400 block">Current Leading Bid</span>
@@ -1044,6 +1047,138 @@
             return '₹' + Number(amount).toLocaleString('en-IN');
         }
 
+        // ----------------- FIFA 19 PLAYER SPECIALITIES ENGINE -----------------
+
+        function computePlayerSpecialities(p) {
+            if (!p) return [];
+            if (p.specialities && Array.isArray(p.specialities) && p.specialities.length > 0) {
+                return p.specialities;
+            }
+
+            const specs = [];
+            const acc = Number(p.acceleration) || 0;
+            const spd = Number(p.sprint_speed) || 0;
+            const dri = Number(p.dribbling) || 0;
+            const agi = Number(p.agility) || 0;
+            const bal = Number(p.balance) || 0;
+            const rea = Number(p.reactions) || 0;
+            const pos = Number(p.positioning) || 0;
+            const fin = Number(p.finishing) || 0;
+            const shp = Number(p.shot_power) || 0;
+            const lgs = Number(p.long_shots) || 0;
+            const vis = Number(p.vision) || 0;
+            const cro = Number(p.crossing) || 0;
+            const fka = Number(p.free_kick_accuracy) || 0;
+            const spa = Number(p.short_passing) || 0;
+            const lpa = Number(p.long_passing) || 0;
+            const cur = Number(p.curve) || 0;
+            const itc = Number(p.interceptions) || 0;
+            const hea = Number(p.heading_accuracy) || 0;
+            const stt = Number(p.standing_tackle) || 0;
+            const slt = Number(p.sliding_tackle) || 0;
+            const jmp = Number(p.jumping) || 0;
+            const sta = Number(p.stamina) || 0;
+            const str = Number(p.strength) || 0;
+            const ht = Number(p.height_cm) || 180;
+            const wt = Number(p.weight_kg) || 75;
+            const skills = Number(p.skill_moves) || 3;
+            const position = (p.position || '').toUpperCase();
+
+            const gkd = Number(p.gk_diving) || 0;
+            const gkh = Number(p.gk_handling) || 0;
+            const gkp = Number(p.gk_positioning) || 0;
+            const gkr = Number(p.gk_reflexes) || 0;
+
+            if (position === 'GK') {
+                if (gkd >= 86 && gkr >= 86) {
+                    specs.push({ name: 'Acrobatic GK', icon: 'fa-shield-cat', color: 'amber', desc: 'Spectacular diving and reflex shot-stopping' });
+                }
+                if (gkp >= 86 && gkh >= 86) {
+                    specs.push({ name: 'Traditional GK', icon: 'fa-hands', color: 'blue', desc: 'Commanding aerial handling and positional discipline' });
+                }
+                return specs;
+            }
+
+            if ((acc + spd) >= 180) {
+                specs.push({ name: 'Speedster', icon: 'fa-bolt', color: 'amber', desc: 'Lightning pace & acceleration' });
+            }
+            if ((dri >= 86 && agi >= 75) || (skills >= 5 && dri >= 85)) {
+                specs.push({ name: 'Dribbler', icon: 'fa-wand-magic-sparkles', color: 'purple', desc: 'Elite ball control & agility' });
+            }
+            if (lgs >= 86 && shp >= 86) {
+                specs.push({ name: 'Distance Shooter', icon: 'fa-bullseye', color: 'rose', desc: 'Lethal long-range shooting power' });
+            }
+            if (vis >= 86 && spa >= 86 && lpa >= 73) {
+                specs.push({ name: 'Playmaker', icon: 'fa-brain', color: 'blue', desc: 'Master of vision and chance creation' });
+            }
+            if (cro >= 86 && cur >= 80) {
+                specs.push({ name: 'Crosser', icon: 'fa-share-nodes', color: 'cyan', desc: 'Pinpoint wing delivery & curve' });
+            }
+            if (fka >= 86 && (cur >= 85 || shp >= 85)) {
+                specs.push({ name: 'FK Specialist', icon: 'fa-futbol', color: 'emerald', desc: 'Deadly set-piece precision' });
+            }
+            if ((fin >= 85 && hea >= 85 && pos >= 85) || (fin >= 88 && pos >= 88)) {
+                specs.push({ name: 'Poacher', icon: 'fa-crosshairs', color: 'red', desc: 'Instinctual predator in the 18-yard box' });
+            }
+            if (fin >= 86 && lgs >= 80) {
+                specs.push({ name: 'Clinical Finisher', icon: 'fa-fire', color: 'orange', desc: 'Ruthless accuracy in front of goal' });
+            }
+            if ((hea >= 90 && (jmp >= 85 || ht >= 188)) || (hea >= 86 && ht >= 185 && jmp >= 80)) {
+                specs.push({ name: 'Aerial Threat', icon: 'fa-plane-departure', color: 'sky', desc: 'Dominant in the air with towering leap' });
+            }
+            if (stt >= 86 && slt >= 85) {
+                specs.push({ name: 'Tackling', icon: 'fa-shield-halved', color: 'indigo', desc: 'Rock-solid tackling efficiency' });
+            }
+            if (itc >= 86 && rea >= 80) {
+                specs.push({ name: 'Tactician', icon: 'fa-compass', color: 'teal', desc: 'Anticipates play with elite interceptions' });
+            }
+            if ((str >= 86 && wt >= 83) || str >= 90) {
+                specs.push({ name: 'Strength', icon: 'fa-dumbbell', color: 'amber', desc: 'Physical powerhouse' });
+            }
+            if ((agi >= 90 && rea >= 80) || (agi >= 86 && jmp >= 86)) {
+                specs.push({ name: 'Acrobat', icon: 'fa-person-running', color: 'fuchsia', desc: 'Extreme agility & body control' });
+            }
+            if (sta >= 88 && (agi >= 70 || spa >= 75)) {
+                specs.push({ name: 'Engine', icon: 'fa-gauge-high', color: 'lime', desc: 'High stamina covering full pitch' });
+            }
+
+            const specNames = new Set(specs.map(s => s.name));
+            if ((specNames.has('Poacher') || specNames.has('Clinical Finisher')) && 
+                ['Speedster', 'Dribbler', 'Aerial Threat', 'Distance Shooter', 'Strength', 'Acrobat'].filter(x => specNames.has(x)).length >= 2) {
+                specs.unshift({ name: 'Complete Forward', icon: 'fa-crown', color: 'yellow', desc: 'Ultimate all-round attacking superstar' });
+            }
+            if (specNames.has('Playmaker') && 
+                ['Distance Shooter', 'Engine', 'Dribbler', 'Crosser', 'FK Specialist', 'Tackling', 'Tactician'].filter(x => specNames.has(x)).length >= 2) {
+                specs.unshift({ name: 'Complete Midfielder', icon: 'fa-crown', color: 'yellow', desc: 'Dominates both attack and midfield control' });
+            }
+            if (specNames.has('Tackling') && specNames.has('Tactician') && 
+                ['Aerial Threat', 'Strength', 'Speedster'].filter(x => specNames.has(x)).length >= 1) {
+                specs.unshift({ name: 'Complete Defender', icon: 'fa-crown', color: 'yellow', desc: 'World-class defensive rock' });
+            }
+
+            return specs;
+        }
+
+        function getSpecialityBadgeStyle(color) {
+            switch (color) {
+                case 'yellow': return 'bg-amber-100 dark:bg-amber-950/70 border-amber-400 text-amber-950 dark:text-amber-200 font-black ring-1 ring-amber-400/50 shadow-sm';
+                case 'amber': return 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 text-amber-900 dark:text-amber-200';
+                case 'rose':
+                case 'red': return 'bg-rose-50 dark:bg-rose-950/50 border-rose-300 text-rose-900 dark:text-rose-200';
+                case 'orange': return 'bg-orange-50 dark:bg-orange-950/50 border-orange-300 text-orange-900 dark:text-orange-200';
+                case 'purple':
+                case 'fuchsia': return 'bg-purple-50 dark:bg-purple-950/50 border-purple-300 text-purple-900 dark:text-purple-200';
+                case 'blue':
+                case 'sky':
+                case 'cyan': return 'bg-blue-50 dark:bg-blue-950/50 border-blue-300 text-blue-900 dark:text-blue-200';
+                case 'emerald':
+                case 'lime':
+                case 'teal': return 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 text-emerald-900 dark:text-emerald-200';
+                case 'indigo': return 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-300 text-indigo-900 dark:text-indigo-200';
+                default: return 'bg-slate-100 dark:bg-slate-800 border-slate-300 text-slate-900 dark:text-slate-200';
+            }
+        }
+
         async function fetchAuctionState() {
             try {
                 const res = await fetch('/api/auction/state');
@@ -1533,6 +1668,24 @@
 
                 const workrateEl = document.getElementById('stage-p-workrate');
                 if (workrateEl) workrateEl.textContent = current_player.work_rate || 'Med/Med';
+
+                // Render Specialities Strip on Stage Card
+                const specsContainer = document.getElementById('stage-p-specialities');
+                if (specsContainer) {
+                    const specs = computePlayerSpecialities(current_player);
+                    if (specs && specs.length > 0) {
+                        specsContainer.innerHTML = specs.slice(0, 3).map(s => `
+                            <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[9px] font-black shadow-xs ${getSpecialityBadgeStyle(s.color)}" title="${s.desc}">
+                                <i class="fa-solid ${s.icon} text-[8px]"></i>
+                                <span>${s.name}</span>
+                            </span>
+                        `).join('') + (specs.length > 3 ? `<span class="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 self-center">+${specs.length - 3} more</span>` : '');
+                        specsContainer.classList.remove('hidden');
+                    } else {
+                        specsContainer.innerHTML = '';
+                        specsContainer.classList.add('hidden');
+                    }
+                }
 
                 document.getElementById('stage-bid-amount').textContent = formatMoney(state.current_bid);
                 const leadingText = leading_bidder ? `${leading_bidder.avatar} ${leading_bidder.name}` : 'Opening Price (No Bids Yet)';
@@ -2197,6 +2350,7 @@
             }
 
             const p = currentAuctionData.current_player;
+            const specialities = computePlayerSpecialities(p);
             const modal = document.getElementById('mobile-player-details-modal');
             const content = document.getElementById('mobile-player-details-content');
 
@@ -2266,6 +2420,29 @@
                             <span class="text-slate-500 dark:text-slate-400 font-semibold">Base Price:</span>
                             <span class="font-black text-emerald-600 dark:text-emerald-400">${formatMoney(p.base_price)}</span>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Specialities & Trait Badges Section -->
+                <div class="bg-gradient-to-r from-slate-50 via-amber-50/50 to-slate-50 dark:from-slate-800 dark:via-slate-800/90 dark:to-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/80 pb-1.5">
+                        <span class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-200 tracking-wider flex items-center space-x-1.5">
+                            <i class="fa-solid fa-medal text-amber-500"></i>
+                            <span>FIFA 19 Specialities (${specialities.length})</span>
+                        </span>
+                        <span class="text-[9px] font-extrabold text-slate-400 uppercase">In-Game Traits</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        ${specialities.length > 0 ? specialities.map(s => `
+                            <div class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl border text-[10px] font-black shadow-xs ${getSpecialityBadgeStyle(s.color)}" title="${s.desc}">
+                                <i class="fa-solid ${s.icon} text-[9px]"></i>
+                                <span>${s.name}</span>
+                            </div>
+                        `).join('') : `
+                            <div class="text-[10px] text-slate-400 italic py-0.5">
+                                Standard Player Profile (No Elite Speciality Badges)
+                            </div>
+                        `}
                     </div>
                 </div>
 
